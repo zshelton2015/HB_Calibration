@@ -7,7 +7,7 @@ import string
 import sqlite3 as lite
 import csv
 from linearADC import *
-from read_histo_2d import *
+from read_histo_2d import read_histo_2d
 
 
 #c1 = TCanvas('c1', 'Plots', 1000, 500)
@@ -43,10 +43,18 @@ def cleanGraph(graph,i_range):
 
 
     #Identify the last point to keep
-    for p in topPoints:
-        if graph.GetY()[p] > MaxSaveValue:
-            maxPointNumber = p
-            break
+    
+    if i_range == 3:
+        for p in topPoints:
+            if graph.GetY()[p] > MaxSaveValue or graph.GetY()[p] < graph.GetY()[p-1]:
+                maxPointNumber = p
+                break
+    else:
+        for p in topPoints:
+            if graph.GetY()[p] > MaxSaveValue:
+                maxPointNumber = p
+                break
+
 
     #Identify the first point to keep
     for p in botPoints:
@@ -121,7 +129,7 @@ def makeADCvsfCgraphSepCapID(values,mean, rms, charge,histo_list = range(0,196),
         for i_capID in range(4):    
             #print "the hist is :", ih  
             ADCvsfC=(TGraphErrors(len(mean[i_range][ih][i_capID]),_charge,mean[i_range][ih][i_capID],_chargeErr,rms[i_range][ih][i_capID]))
-            ADCvsfC.SetNameTitle("LinADCvsfC_%i_%i_range_%i_shunt_%s_capID_%i"%(ih, channel,i_range, ("%.1f"%shuntMult).replace(".","_"),i_capID),"LinADCvsfC_%i_%i_range_%i_shunt_%.1f_capID_%i"%(ih, channel,i_range,float(shuntMult),i_capID))
+            ADCvsfC.SetNameTitle("LinADCvsfC_%i_range_%i_shunt_%s_capID_%i"%(channel,i_range, ("%.1f"%shuntMult).replace(".","_"),i_capID),"LinADCvsfC_%i_range_%i_shunt_%.1f_capID_%i"%(channel,i_range,float(shuntMult),i_capID))
 
 
             ADCvsfC = cleanGraph(ADCvsfC, i_range)

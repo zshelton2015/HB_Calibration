@@ -14,18 +14,50 @@ def setDAC( dacValue = 0, dacChannel = -1,relayOn = False):
     sleep(2)
 """
 
-def setDAC( dacValue = 0):
-    os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector -o %d" % dacValue)
+def setDAC( dacValue = 0, quiet = False):
+    os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector -o %d%s" % (dacValue, "" if not quiet else " -quiet"))
     sleep(1)
 
+# Set given analog channels only for QI slots specified in boardsOn (default of "" will activate all slots)
+def setDAC_multi( cm = "", boardsOn = "", quiet = False):
+    
+    if cm != "":    
+        try:
+            # If cm is just an integer, set all channels to that value
+            cm = " -o %d" % int(cm)
+        except ValueError:
+            cm = " -cm " + cm
+        #print "cm =", cm
+    if boardsOn == "":
+        # All digital channels on
+        digChOn = range(1,9)
+    else:
+        # Only turn on specified digital channels
+        boardsOn = boardsOn.split(",")
+        digChOn = []
+        for d in boardsOn:
+            try:
+                if int(d) in xrange(1,9):
+                    digChOn.append(int(d))
+            except ValueError:
+                continue
+        #digChOn = [int(d) for d in digChOn]   # Convert to integers
+    d = ""
+    for x in xrange(8):
+        d = ("0" if (x+1) in digChOn else "1") + d
+    dm = " -dm %s" % eval("0b%s" % d)
+    #print " d =", d
+    #print "dm =", dm
+    
+    os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector %s%s" % (cm + dm, "" if not quiet else " -quiet") )
+    sleep(1)
 
-def setDAC_multi( cm = "", dm = 0 ):
+def setDAC_multi_old( cm = "", dm = 0 ):
     if cm != "":
         cm = " -cm " + cm
     dm = " -dm " + str(dm)
     os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector %s" % (cm + dm) )
     sleep(1)
-
 
 def setDAC_cmd(command):
     os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector %s" % command )

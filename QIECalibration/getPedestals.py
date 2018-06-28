@@ -35,6 +35,11 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
     c2.SetGrid()
    
     shuntPeds = {}
+
+    pedHists = {}
+    for i_shunt in shuntMult_list:
+        pedHists[i_shunt] = TH1F("pedestalCharge_%s"%str(i_shunt).replace(".","_"),"pedestalCharge_%s"%str(i_shunt).replace(".","_"),-200,-100,100)
+
     
     for ih in histoList:
         _file.mkdir("h%i"%ih)
@@ -84,51 +89,66 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
                     graph.Fit("pol1","0")
                 line = graph.GetFunction("pol1")
                 graph.Write()
-                highCurrentShuntPeds[i_shunt].append(-1*(line.GetParameter(0)-bin0startLevel)/line.GetParameter(1))
+                if not line.GetParameter(1)==0.:
+                    highCurrentShuntPeds[i_shunt].append(-1*(line.GetParameter(0)-bin0startLevel)/line.GetParameter(1))                    
+                else:
+                    highCurrentShuntPeds[i_shunt].append(-999.)
+                if highCurrentShuntPeds[i_shunt]>100:
+                    pedHists[i_shunt].Fill(99.5)
+                elif highCurrentShuntPeds[i_shunt]<-100:
+                    pedHists[i_shunt].Fill(-99.5)
+                else:
+                    pedHists[i_shunt].Fill(highCurrentShuntPeds[i_shunt])
 
+        # Removed by Danny, June 21 2018, I don't think this is needed any more, but if the pedestal parts stop working, try uncommenting the block below
 
-        #make graphs of the shunt vs measured pedestal
-        graphs = []
+        # #make graphs of the shunt vs measured pedestal
+        # graphs = []
+        # for i_capID in range(4):
+        #     x = shuntMult_list[1:]
+        #     y = []
+        #     for s in shuntMult_list[1:]:
+        #         y.append(highCurrentShuntPeds[s][i_capID])
+        #     #print x
+        #     #print y
+        #     _x = array('d',x)
+        #     _y = array('d',y)
 
-        for i_capID in range(4):
-            x = shuntMult_list[1:]
-            y = []
-            for s in shuntMult_list[1:]:
-                y.append(highCurrentShuntPeds[s][i_capID])
-            #print x
-            #print y
-            _x = array('d',x)
-            _y = array('d',y)
-                
-            graphs.append(TGraph(len(x),_x,_y))
-            graphs[-1].SetNameTitle(graphs_shunt[1.0][ih][i_capID].GetTitle().replace("_shunt_1_0_","_"),graphs_shunt[1.0][ih][i_capID].GetTitle().replace("_shunt_1_0_","_"))
-            graphs[-1].GetYaxis().SetRangeUser(-500,150)
-            if not verbose:
-                graphs[-1].Fit("pol1","0Q")
-            else:
-                graphs[-1].Fit("pol1","0")
-
-            line = graphs[-1].GetFunction("pol1")
-            c1.cd(i_capID+1)
-            graphs[-1].SetMarkerStyle(7)
-            graphs[-1].SetMarkerSize(2)
-            graphs[-1].GetXaxis().SetTitle("Shunt Value (nominal)")
-            graphs[-1].GetYaxis().SetTitle("Measured total pedestal")
-            graphs[-1].Draw("ap")
-            graphs[-1].Write()
-
-            highCurrentPeds.append(line.Eval(1))
+        #     graphs.append(TGraph(len(x),_x,_y))
+        #     graphs[-1].SetNameTitle(graphs_shunt[1.0][ih][i_capID].GetTitle().replace("_shunt_1_0_","_"),graphs_shunt[1.0][ih][i_capID].GetTitle().replace("_shunt_1_0_","_"))
+        #     graphs[-1].GetYaxis().SetRangeUser(-500,150)
+        #     if not verbose:
+        #         graphs[-1].Fit("pol1","0Q")
+        #     else:
+        #         graphs[-1].Fit("pol1","0")
+        #     line = graphs[-1].GetFunction("pol1")
+        #     c1.cd(i_capID+1)
+        #     graphs[-1].SetMarkerStyle(7)
+        #     graphs[-1].SetMarkerSize(2)
+        #     graphs[-1].GetXaxis().SetTitle("Shunt Value (nominal)")
+        #     graphs[-1].GetYaxis().SetTitle("Measured total pedestal")
+        #     graphs[-1].Draw("ap")
+        #     graphs[-1].Write()
+        #     highCurrentPeds.append(line.Eval(1))
             
-        if verbose:
-            c1.SaveAs("%s/PedestalPlots/%s.pdf"%(dirName,graphs_shunt[1.0][ih][0].GetTitle().replace("_shunt_1_0_capID_0","")))
-        else:
-            Quiet(c1.SaveAs)("%s/PedestalPlots/%s.pdf"%(dirName,graphs_shunt[1.0][ih][0].GetTitle().replace("_shunt_1_0_capID_0","")))
+
+
+
+        #c1.SaveAs("%s/PedestalPlots/%s.pdf"%(dirName,graphs_shunt[1.0][ih][0].GetTitle().replace("_shunt_1_0_capID_0","")))
+        # if verbose:
+        #     c1.SaveAs("%s/PedestalPlots/%s.pdf"%(dirName,graphs_shunt[1.0][ih][0].GetTitle().replace("_shunt_1_0_capID_0","")))
+        # else:
+        #     Quiet(c1.SaveAs)("%s/PedestalPlots/%s.pdf"%(dirName,graphs_shunt[1.0][ih][0].GetTitle().replace("_shunt_1_0_capID_0","")))
         
         pedestalVals[ih] = {#"low":lowCurrentPeds,
-                            "high":highCurrentPeds,
+                            #"high":highCurrentPeds,
                             "shunts":highCurrentShuntPeds,
                             }
 
+
+        
+    for i_shunt in shuntMult_list:
+        pedHists[i_shunt].Write()
     _file.Close()
 
     return pedestalVals

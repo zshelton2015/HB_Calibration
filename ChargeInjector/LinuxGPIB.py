@@ -48,7 +48,7 @@ class Keithley:
         print ""    # Ensure output buffer is flushed
 
 
-    def read(self, verbose=True):
+    def read(self, quiet=False):
         ''' Read data from instrument '''
         gpib.write(self.con, '*RST')          # restore GPIB defaults
         gpib.write(self.con, 'SYST:ZCH ON')   # enable zero check
@@ -85,13 +85,13 @@ class Keithley:
 
             currents.append(float(i.encode('ascii','ignore')))
 
-        print "Readings expected: %d\tReadings taken: %d" % (self.numReadings, len(currents))
         self.mean = mean(currents)
         self.std = std(currents)
         self.min = min(currents)
         self.max = max(currents)
         self.currents = currents
-        if verbose:
+        if not quiet:
+            print "Readings expected: %d\tReadings taken: %d" % (self.numReadings, len(currents))
             print 'Mean: {}'.format(self.mean)
             print 'STD : {}'.format(self.std)
             print 'Min : {}'.format(self.min)

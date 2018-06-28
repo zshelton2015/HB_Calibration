@@ -37,7 +37,8 @@ def plotQIcalibration(results, outDir = "results", currentMode = ""):
     gStyle.SetLineColor(kBlack)
     
 
-    for ch in xrange(1, len(results)+1):   # Number of channels
+    #for ch in xrange(1, len(results)+1):   # Number of channels
+    for ch in sorted(results.keys()): 
         gr = TGraphAsymmErrors()
         gr.SetMarkerStyle(22)
         gr.SetMarkerSize(1.2)
@@ -57,7 +58,7 @@ def plotQIcalibration(results, outDir = "results", currentMode = ""):
             gr.SetPoint(np, dacVal, mean)
             gr.SetPointError(np, 0., 0., err, err)
  
-        calibGraphs.append(gr)
+        calibGraphs.append((gr,ch))
 
     if outDir[-1] == "/": outDir = outDir[:-1]
     os.system("mkdir -p %s/calibGraphs" % outDir )
@@ -73,7 +74,7 @@ def plotQIcalibration(results, outDir = "results", currentMode = ""):
 
     fitParams = {}   # Converted to charge by * 25ns
 
-    for i,gr in enumerate(calibGraphs):
+    for i,(gr,ch) in enumerate(calibGraphs):
         gr.Fit('pol1', "Q")   # Q: Quiet mode
         f = gr.GetFunction("pol1")
         p0 = f.GetParameter(0)
@@ -84,8 +85,8 @@ def plotQIcalibration(results, outDir = "results", currentMode = ""):
         fitline = "offset %g #pm %g   slope %g #pm %g" % (p0, p0_err, p1, p1_err)
         
         # Convert to fC
-        #fitParams[(i+1)] = {"slope":(-p1 * 25.e6), "offset":(p0 * 25.e6)}
-        fitParams[(i+1)] = {"slope":(p1), "offset":(p0)}
+        fitParams[ch] = {"slope":(p1), "offset":(p0)}
+        #fitParams[(i+1)] = {"slope":(p1), "offset":(p0)}
         
 
         gr.GetXaxis().SetTitle("DAC value")

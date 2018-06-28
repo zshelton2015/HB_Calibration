@@ -108,11 +108,11 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
             #print i_graph
             nominalgraph =  graphs[i_capID]
             #print nominalgraph.GetName()
-            if shuntMult == 1:
-                outputTGraphs.cd("adcVsCharge")
-            else:
-                outputTGraphs.cd("Shunted_adcVsCharge")
-            nominalgraph.Write()
+            # if shuntMult == 1:
+            #     outputTGraphs.cd("adcVsCharge")
+            # else:
+            #     outputTGraphs.cd("Shunted_adcVsCharge")
+            # nominalgraph.Write()
             graph = nominalgraph.Clone("%s_linearized"%nominalgraph.GetName())
             graph.SetNameTitle("%s_linearized"%nominalgraph.GetName(),"%s_linearized"%nominalgraph.GetName())
 
@@ -122,17 +122,17 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
             minCharge = 9e9
             for p in points:
                 x = graph.GetX()[p]-vOffset
-                nominalgraph.GetX()[p] -= pedestal[i_capID]
+                # nominalgraph.GetX()[p] -= pedestal[i_capID]
                 graph.GetX()[p] -= pedestal[i_capID]
 
 
             graph.GetXaxis().SetTitle("Charge (fC)")
             graph.GetYaxis().SetTitle("Linearized ADC")
 
-            if shuntMult == 1: 
-                outputTGraphs.cd("LinadcVsCharge")
-            else:
-                outputTGraphs.cd("Shunted_LinadcVsCharge")
+            outputTGraphs.cd("LinadcVsCharge")
+            # if shuntMult == 1: 
+            # else:
+            #     outputTGraphs.cd("Shunted_LinadcVsCharge")
             
             if verbose:
                 print "Pedestals Used"
@@ -201,7 +201,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
                 saveName += "_shunt_"+str(shuntMult).replace(".","_")
                 if not useCalibrationMode: saveName += "_NotCalMode"
                 saveName += ".pdf"
-                graph.SetTitle("LinADC vs Charge, Range %i%s" % (i_range,qieInfo))
+                graph.SetTitle("LinADC vs Charge, Range %i Shunt %s%s" % (i_range,str(shuntMult).replace(".","_"),qieInfo))
                 graph.GetYaxis().SetTitle("Lin ADC")
                 graph.GetYaxis().SetTitleOffset(1.2)
                 graph.GetXaxis().SetTitle("Charge fC")
@@ -309,6 +309,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
                     Quiet(c1.SaveAs)(saveName)
                 else:
                     c1.SaveAs(saveName)
+                #c1.SaveAs(saveName)
 
     if shuntMult == 1:
         ranges = range(4)
@@ -349,11 +350,11 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
         # for graph in linearizedGraphList:
         #       graph.Write()
 
+    outputTGraphs.cd("fitLines")
     if shuntMult==1:
-        outputTGraphs.cd("fitLines")
         ranges = range(4)
     else:
-        outputTGraphs.cd("Shunted_fitLines")
+#        outputTGraphs.cd("Shunted_fitLines")
         ranges = range(3) #change
     for i_range in ranges:
         if graphList[i_range]==None: continue
@@ -419,5 +420,9 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
                 Quiet(c1.SaveAs)(saveName)
             else:
                 c1.SaveAs(saveName)
+            #c1.SaveAs(saveName)
+                
+            # directory = saveName.split("Lin")[0]
+            # os.system("gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=%s/Plots_range_%i_shunt_%s.pdf %s/LinADCvsfC_qie*_range%i_capID*_shunt_%s_NotCalMode.pdf"%(directory,i_range, str(shuntMult).replace(".","_"),directory,i_range, str(shuntMult).replace(".","_")))
 
     return params, unshunted_params

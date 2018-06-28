@@ -1,0 +1,3 @@
+QIE_TEST_POINTS=full_hb_scan_test.txt
+QIE_TEST_SETTER=dac_HB.sh
+QIE_TEST_FIBERUSE=0x3

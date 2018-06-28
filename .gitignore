@@ -1,3 +1,6 @@
 *.pyc
 *.root
 *~
+*.swp*
+QIECalibration/data
+QIECalibration/outputDump

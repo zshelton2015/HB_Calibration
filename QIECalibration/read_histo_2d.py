@@ -4,27 +4,13 @@ gROOT.SetBatch()
 #import sqlite3 as lite
 from array import array
 from linearADC import *
+import sqlite3
+import re
+
+findSerial = re.compile(r"(?:QIECalibration_)(\d+)(?:\.root)")
 
 # TODO: Un-hardcode this
-QIcalibParams = {}
-for i in xrange(1,17):
-    QIcalibParams[i] = {}
-QIcalibParams[1]  = {"offset":303.324, "slope":-7.76722}
-QIcalibParams[2]  = {"offset":216.492, "slope":-7.76455}
-QIcalibParams[3]  = {"offset":293.976, "slope":-7.76456}
-QIcalibParams[4]  = {"offset":317.09 , "slope":-7.76632}
-QIcalibParams[5]  = {"offset":275.262, "slope":-7.76717}
-QIcalibParams[6]  = {"offset":272.505, "slope":-7.76711}
-QIcalibParams[7]  = {"offset":230.787, "slope":-7.77254}
-QIcalibParams[8]  = {"offset":261.062, "slope":-7.7672}
-QIcalibParams[9]  = {"offset":336.292, "slope":-7.76707}
-QIcalibParams[10] = {"offset":223.713, "slope":-7.76755}
-QIcalibParams[11] = {"offset":409.359, "slope":-7.77051}
-QIcalibParams[12] = {"offset":198.611, "slope":-7.76668}
-QIcalibParams[13] = {"offset":342.27 , "slope":-7.76316}
-QIcalibParams[14] = {"offset":314.194, "slope":-7.76687}
-QIcalibParams[15] = {"offset":311.753, "slope":-7.7677}
-QIcalibParams[16] = {"offset":303.609, "slope":-7.76495}
+QIcalibrationFile = "/home/hep/HB_Calibration/ChargeInjector/old_InjectorCalibration_highCurrent/ChargeInjectorCalibrations.db"
 
 # Flip front and back adapters
 flipped = False 
@@ -50,18 +36,27 @@ shunt_Val ={1:0,
             11:30,
             11.5:31}
 
-def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardMap={},histoList = range(192)):
+def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardMap={}, histoMap={}, histoList = range(192), verbose = False):
     shuntVal = shunt_Val[shuntMult]
     result = {}
    
     # TODO: Remove once serial number is no longer part of hist name
-    serialNum = int(file_in[file_in.find("_")+1 : file_in.find(".root")])
+    try:
+        serialNum = int(findSerial.findall(file_in)[0])
+    except IndexError:
+        print "Can't find serial number from input file %s" % file_in
+        serialNum = 0
+    except ValueError:
+        print "Invalid serial %s" % findSerial.findall(file_in)[0]
+        serialNum = 0
+    #serialNum = int(file_in[file_in.find("_")+1 : file_in.find(".root")])
     
     tf = TFile(file_in, "READ")
     rms={}
     mean={}
-    #conSlopes = lite.connect("Slopes_Offsets_Sept8.db")  
-    #cursor = conSlopes.cursor()     
+    
+    conSlopes = sqlite3.connect(QIcalibrationFile)
+    cursor = conSlopes.cursor()     
     #histNameScheme = tf.GetListOfKeys()[9].GetName().split('_')
     #histNameStart = histNameScheme[0]+'_'+histNameScheme[1]
 
@@ -77,10 +72,6 @@ def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardM
         qieRange = range(2) #change
    
     for i_qieRange in qieRange:
-        #if i_qieRange == 0 and shuntMult==1:
-        #    highCurrent = False
-        #else:
-        #    highCurrent = True
         print "Now on shunt %.1f and range %i"%(shuntMult,i_qieRange)
         
         rms[i_qieRange]={}
@@ -123,7 +114,6 @@ def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardM
                  #    print 'backplane slot', backplane_slotNum, ' not mapped to charge injection card!!!'
                   #   sys.exit()
                 #injectioncard = injectionCardMap[backplane_slotNum][0]
-                #dac = injectionCardMap[backplane_slotNum][1]
                 
                 results[i_qieRange][histNum] = {}
                 rms[i_qieRange][histNum]={}
@@ -156,7 +146,7 @@ def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardM
                         info["mean"].append(hist.GetMean(2)-offset+rangeADCoffset)
                         info["rms"].append(hist.GetRMS(2))
                         #info["rms"].append(max(hist.GetRMS(2), 0.01))
-                    
+                    """
                     # Check for problems with 0 ADC in capID 0
                     #if (info["mean"][1] - info["mean"][0]) > 2. * max(info["rms"][1:]):
                     if info["rms"][0] > 0.01*info["mean"][0] and (info["mean"][1] - info["mean"][0]) > max(info["rms"][1:]):
@@ -164,37 +154,42 @@ def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardM
                         slope = QIcalibParams[i_channel+1]["slope"]
                         chargeq = -(dacVal*slope + offset)
                         # Retake first data point with range 1-63 instead of 0-63
-                        print "Retaking range %d fib %d ch %d dac %d (charge %d)" % (i_qieRange, i_link, i_channel, dacVal, chargeq)
-                        print "Old:"
-                        print info["mean"]
-                        print info["rms"]
+                        if verbose:
+                            print "Retaking range %d fib %d ch %d dac %d (charge %d)" % (i_qieRange, i_link, i_channel, dacVal, chargeq)
+                            print "Old:"
+                            print info["mean"]
+                            print info["rms"]
 
                         hist.GetYaxis().SetRangeUser(1., 63.5)
                         info["mean"][0] = hist.GetMean(2) + rangeADCoffset
                         info["rms"][0] = hist.GetRMS(2)
-                        print "\nNew"
-                        print info["mean"]
-                        print info["rms"]
-                        print "\n\n"
-
-                    results[i_qieRange][histNum][dacVal] = info
+                        if verbose:
+                            print "\nNew"
+                            print info["mean"]
+                            print info["rms"]
+                            print "\n\n"
+                    """
+                    #results[i_qieRange][histNum][dacVal] = info
                     
                     #pprint(results[i_qieRange][histNum][dacVal])
-                         
                 charge_=[]
                 #query = ( injectioncard, int(dac), channel, int(highCurrent), dacvalue, dacvalue)
                 #                       print injectioncard, int(dac), channel, int(highCurrent), dacvalue, dacvalue
                 #cursor.execute('SELECT offset, slope FROM CARDCAL WHERE card=? AND dac=? AND channel=? AND highcurrent=? AND rangelow<=? AND rangehigh>=?', query )
-                #result_t = cursor.fetchone()
+
+                board = histoMap[ih]["QIboard"]
+                QIchannel = histoMap[ih]["QIchannel"]
+                cursor.execute("SELECT offset, slope FROM ChargeInjectorCalibrations WHERE board=? AND channel=?", (board,QIchannel))
+                result_t = cursor.fetchone()
 
                 # TODO: Replace with lookup for calibration slopes/offsets
-                #offset = result_t[0]
-                #slope = result_t[1]
+                offset = result_t[0]
+                slope = result_t[1]
                 #offset = 10.9
                 #slope = -0.305
                 
-                offset = QIcalibParams[channel]["offset"]
-                slope = QIcalibParams[channel]["slope"]
+                #offset = QIcalibParams[channel]["offset"]
+                #slope = QIcalibParams[channel]["slope"]
 
                 
                 
@@ -229,10 +224,12 @@ def read_histo_2d(file_in="trial.root",shuntMult = 1, linkMap={}, injectionCardM
                         #if adcDist.GetBinContent(1) > 0. and adcDist.GetRMS() - mean[i_qieRange][histNum][i_capID][-1] < 0:
                         #if histo_charge[i_qieRange][histNum][i_capID].GetBinContent(ix,1) > 10. and histo_charge[i_qieRange][histNum][i_capID].GetBinContent(ix-1,1) < 0.1: 
                         if i_capID == 0 and histo_charge[i_qieRange][histNum][0].GetBinContent(ix,1) > 10. and histo_charge[i_qieRange][histNum][1].GetBinContent(ix,1) < 0.1:
-                            print "Retaking data for range %d fib %d ch %d capID %d charge %d" % (i_qieRange, i_link, i_channel, i_capID, histo_charge[i_qieRange][histNum][i_capID].GetXaxis().GetBinCenter(ix))
-                            print "Old:", adcDist.GetMean()
+                            if verbose:
+                                print "Retaking data for range %d fib %d ch %d capID %d charge %d" % (i_qieRange, i_link, i_channel, i_capID, histo_charge[i_qieRange][histNum][i_capID].GetXaxis().GetBinCenter(ix))
+                                print "Old:", adcDist.GetMean()
                             adcDist.GetXaxis().SetRange(2,adcDist.GetNbinsX())    
-                            print "New:", adcDist.GetMean()
+                            if verbose:
+                                print "New:", adcDist.GetMean()
                         
                         mean[i_qieRange][histNum][i_capID].append(adcDist.GetMean())
                         rms[i_qieRange][histNum][i_capID].append(max(adcDist.GetRMS(),0.25)/N**0.5)
