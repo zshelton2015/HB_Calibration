@@ -94,7 +94,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     FailedCards = []
     FailedSlopes =[]
     FailedOffset = []
-    #Set Axes Digits
+    #Grab File Names
     if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
         os.makedirs("data/%s/Run_%s/SummaryPlots"%(date,run))
     if(runAll or not uid is None):
@@ -103,6 +103,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         files = []
         for f in dbnames:
             files.append(glob.glob("data/%s/Run_%s/%s"%(date,run,f))[0])
+    print files
     MergeDatabases(files, "data/%s/Run_%s/"%(date, run),"MergedDatabaseRun%s.db"%run)
     xyz1234 = sqlite3.connect("data/%s/Run_%s/MergedDatabaseRun%s.db"%(date, run,run))
     cursor = xyz1234.cursor()
