@@ -165,6 +165,7 @@ def SummaryPlot(database, arg, date, run):
                     continue
                 # Fetch the values of slope and offset for the corresponding shunt and range
                 values = cursor.execute("select slope,offset,QIE from qieshuntparams where range=%i and shunt=%.1f;" % (r, sh)).fetchall()
+		#values = cursor.execute("select slope,offset, (SELECT slope from qieshuntparams where id=p.id and qie=p.qie and capID=p.capID and range=p.range and shunt=1) from qieshuntparams as p where range = %i and shunt = %.1f;"%(r,sh)).fetchall()
                 # Fetch Max and minimum values
 
                 

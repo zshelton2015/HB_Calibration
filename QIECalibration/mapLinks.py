@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from os import system,popen
+from subprocess import Popen,PIPE
 from textwrap import dedent
 import sys
 from time import sleep
@@ -12,6 +13,9 @@ import re
 from pprint import pprint
 from ast import literal_eval    # Safe eval
 from ROOT import *
+from threading import Timer
+import json
+
 # 0x : value must start with literal '0x'
 # [A-Fa-f0-0] : only values of A-F, a-f, or 0-9 allowed
 # + : multiple numbers allowed
@@ -46,12 +50,32 @@ def histoRun(outF, uHTR = 1):
     
     # Create output directory (if it doesn't exist) 
     os.system("mkdir -p %s" % os.path.dirname(outF))
-    
+    #print "HERE"
+    #print uHTR
+    #cmds = ("uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (uHTR*4)).split(" ")
+    #proc = Popen(cmds, stdout = PIPE, stderr = PIPE)
     # Take histo run
+    """
+    timer = Timer(20, proc.kill)
+    try:
+        timer.start()
+        proc.communicate()
+    finally:
+        timer.cancel()
+    """
+
     popen("uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (uHTR*4)).read()
+
+    #print "DONE HERE"
     
 
 def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
+
+    origSTDOUT = sys.stdout
+    runDir = tmpDir.split('.tmp')[0]
+    stdOutDump = open("%s/mapLinksOutput.stdout"%runDir, 'w')
+    sys.stdout = stdOutDump
+
     with open(configFile, "r") as f:
         for i,line in enumerate(f):
             if line[0] == "#":
@@ -72,10 +96,13 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
 
     # Map histogram number to: QIESlot, Top/Bot, UID, QI slot, QI board, QI channel
     histoMap = {}
-    
+   
+    # List of UniqueID names used to retrieve barcodes
+    uidlist = set()
+
     # Step 1: Map uHTR fiber to Igloo
     print "Mapping uHTR links to QIE Igloos"
-    setDAC_multi(40000)
+    print setDAC_multi(40000,quiet=True)
     print "" 
     # Turn on fixed range mode and set all to range 0
     #fixRangeCmds = ["put %s-[1-4]-QIE[1-64]_FixRange 256*0" % RBX, \
@@ -88,9 +115,9 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     for rm in xrange(1,5):
         for slot in xrange(1,5):
             print "Now on rm %d slot %d" % (rm,slot)
-            resetRangeCmds = []
-            send_commands(cmds = resetRangeCmds)
-            sleep(0.5) 
+            # resetRangeCmds = []
+            # send_commands(cmds = resetRangeCmds)
+            # sleep(0.5) 
             iglooRangeCmds = ["get %s-%d-%d-UniqueID" % (RBX, rm, slot), \
                               "put %s-[1-4]-QIE[1-64]_FixRange 256*0" % RBX, \
                               "put %s-[1-4]-QIE[1-64]_RangeSet 256*0" % RBX, \
@@ -120,7 +147,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             
             # Take histo run
             histoRun("%s/uHTRToIgloo/rm_%d_slot_%d.root" % (tmpDir, rm, slot), uHTR)
-
+            
             # Load histo run file
             f = TFile.Open("%s/uHTRToIgloo/rm_%d_slot_%d.root" % (tmpDir, rm, slot), "read")
             for h in xrange(0,192,8):
@@ -131,6 +158,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 if mean > 100 and mean < 150 and rms < 1 and integral > 100:
                     # Found Top igloo
                     if h not in histoMap.keys():
+                        uidlist.add(UniqueID[-8:])
                         for h_i in xrange(h, h+8):
                             histoMap[h_i] = {"RM":rm, "Slot":slot, "Igloo":"Top", "UniqueID":UniqueID, "Link":(h_i/8)}
                     else:
@@ -140,6 +168,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 elif mean > 150 and mean < 200 and rms < 1 and integral > 100:
                     # Found Bot igloo
                     if h not in histoMap.keys():
+                        uidlist.add(UniqueID[-8:])
                         for h_i in xrange(h, h+8):
                             histoMap[h_i] = {"RM":rm, "Slot":slot, "Igloo":"Bot", "UniqueID":UniqueID, "Link":(h_i/8)}
                     else:
@@ -153,13 +182,27 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     send_commands(cmds = fixRangeCmds)
 
 
+    # Write uids to text file
+    with open("uidlist.txt", "w") as f:
+        for uid in uidlist:
+            f.write(uid + "\n")
+
+    # Retrieve barcodes
+    os.system("./barcodeFromUID.sh")
+    with open("mapping.json", "r") as f:
+        barcodes = dict(literal_eval(f.read()))
+  
+    os.system("mv uidlist.txt %s/uidlist.txt" % runDir)
+    os.system("mv mapping.json %s/mapping.json" % runDir)
+
+    pprint(barcodes)
     
     # Step 2: Map QI board to QIE card
     print "\nMapping QI boards to QIE cards"
     #for QIslot in xrange(1,9):
     for QIslot in sorted(QI_SlotToBoard.keys()): 
         # Turn on QI board in slot QIslot and inject in all channels
-        setDAC_multi(10000, "%s" % QIslot)
+        print setDAC_multi(10000, "%s" % QIslot, quiet=True)
         
         # Take histo run
         histoRun("%s/QIslotToQIEcard/QIslot_%d.root" % (tmpDir, QIslot), uHTR)
@@ -176,6 +219,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 for h_i in xrange(h, h+8):
                     if h_i in histoMap.keys():
                         histoMap[h_i]["QIslot"] = QIslot
+                        histoMap[h_i]["Barcode"] = barcodes[histoMap[h_i]["UniqueID"][-8:]]
                         try:
                             histoMap[h_i]["QIboard"] = QI_SlotToBoard[QIslot]
                         except KeyError:
@@ -186,11 +230,16 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     
     # Step 3: Map QI channel to QIE channel
     print "\nMapping QI channels to QIE channels"
-    
+
+    print histoMap
+
+    # Set of good RM/Slot/Barcode/UIDs
+    goodSlots = set() 
+
     # Only need to loop over odd channels
     for QIchannel in xrange(1,17):
         # Turn on channel QIchannel for all boards
-        setDAC_multi("%d:10000" % QIchannel)
+        print setDAC_multi("%d:10000" % QIchannel, quiet=True)
 
         # Take histo run
         histoRun("%s/QIchannelTOQIEchannel/QIchannel_%d.root" % (tmpDir, QIchannel), uHTR)
@@ -201,13 +250,22 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             hist = f.Get("h%d" % h)
             if hist.GetMean() > 50 and hist.GetRMS() < 2 and hist.Integral() > 100:
                 # Found QIE channel
-
                 histoMap[h]["QIchannel"] = QIchannel
                 histoMap[h]["QIE"] = h % 8 + 8 * (1 if histoMap[h]["Igloo"] == "Bot" else 0) + 1 
-                #histoMap[h+1]["QIchannel"] = QIchannel + 1
-                #histoMap[h+1]["QIE"] = (h+1) % 8 + 8 * (1 if histoMap[h+1]["Igloo"] == "Bot" else 0) + 1 
-        
+                goodSlots.add( (histoMap[h]["RM"], histoMap[h]["Slot"], histoMap[h]["Barcode"], histoMap[h]["UniqueID"]) )
         f.Close()
+    
+    # Sort goodSlots set by RM and save in text file
+    goodSlotOutput = {}
+    for card in sorted(goodSlots, key=lambda goodSlots:(goodSlots[0],goodSlots[1])):
+        goodSlotOutput[card[3]] = {"Barcode":card[2],"RM":card[0],"Slot":card[1]}
+    with open("%s/goodSlots.json" % os.path.dirname(outF),'w') as f:
+        json.dump(goodSlotOutput, f)
+
+    with open("%s/goodSlots.txt" % os.path.dirname(outF),'w') as f:
+        f.write("RM  Slot  Barcode\tUniqueID\n\n")
+        for card in sorted(goodSlots, key=lambda goodSlots:(goodSlots[0],goodSlots[1])):
+            f.write("%d    %d    %s\t%s\n" % (card[0], card[1], card[2], card[3]))
 
     # Check mapping and flag problem slots
     problemSlots = []
@@ -225,10 +283,13 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 problemSlots.append( (rm,slot) )
 
     if len(problemSlots) > 0:
+        sys.stdout = origSTDOUT
+        for rm,slot in problemSlots:
+            print "Error mapping card in RM %d Slot %d, check connections on this slot" % (rm,slot)
         return {}
 
     pprint(histoMap)
-    setDAC_multi(0)
+    print setDAC_multi(0,quiet=True)
     #os.system("rm -rf %s" % tmpDir)
 
     if outF != "":
@@ -239,6 +300,8 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             f.write("# QIE channels numbered 1-16, uHTR links numbered 0-23\n")
             f.write("%s" % histoMap)
 
+
+    sys.stdout = origSTDOUT
 
     return histoMap
 

@@ -16,6 +16,7 @@ then
   /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector $2   2>&1 | grep failed
 elif [[ "$1" == "-s" ]]
 then
+  (>&2 echo "      Setting range ${3} shunt ${2}")
   /home/hep/HB_Calibration/utils/SetFixRangeShunt.sh $3 $2
   sleep 2
 elif [[ "$1" == "-off" ]]

@@ -11,7 +11,6 @@ except NameError:
     from utils import Quiet 
 
 
-
 ####Change the fit to return slopes/offsets in terms of range 0 values for all ranges
 
 #gROOT.SetBatch(kTRUE)
@@ -20,6 +19,7 @@ except NameError:
 #gStyle.SetTitleStyle(kWhite)
 
 graphOffset = [100,500,3000,8000]
+saveResiduals = True
 
 startVal = [[3.2,-15],
             [3.2,-20],
@@ -56,12 +56,12 @@ shuntMultList = shunt_Val.keys()
 shuntMultList.sort()
 
 
-def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = "", useCalibrationMode = True, outputDir = '', shuntMult = 1, pedestalVals = {"low":[0,0,0,0],"high":[0,0,0,0],"shunt":{}}, verbose=False):
+def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "", qieUniqueID = "", useCalibrationMode = True, outputDir = '', shuntMult = 1, pedestalVals = {"low":[0,0,0,0],"high":[0,0,0,0],"shunt":{}}, verbose=False):
 
     fitLines =  []
     slopes =  []
     offsets =  []
-    
+    maxResiduals = []
 #        pedestal = [0]*4
     linearizedGraphList =  []
 
@@ -99,6 +99,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
             continue
         else:                   
             fitLines.append([])
+            maxResiduals.append([])
 
 
 #       if pedestal==None:
@@ -173,6 +174,33 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
                 print graph.GetName()
                 continue
             graph.Write()
+
+            if saveGraph or saveResiduals:
+                xVals = graph.GetX()
+                exVals = graph.GetEX()
+                yVals = graph.GetY()
+                eyVals = graph.GetEY()
+                residuals = []
+                residualErrors = []
+                #residualsY = []
+                #residualErrorsY = []
+                eUp = []
+                eDown = []
+                N = graph.GetN()
+                x = []
+                y = []
+
+                absResidual = []
+                for i in range(N):
+                    absResidual.append((yVals[i]-fitLine.Eval(xVals[i])))
+                    residuals.append((yVals[i]-fitLine.Eval(xVals[i]))/max(yVals[i],0.001))
+                    xLow = (xVals[i]-exVals[i])
+                    xHigh = (xVals[i]+exVals[i])
+                    residualErrors.append((eyVals[i]/max(yVals[i],0.001)))
+                    x.append(xVals[i])
+                maxResidual = max(absResidual, key=abs)
+                maxResiduals[-1].append(abs(maxResidual))
+
                                 
             if saveGraph:
                 qieInfo = ""
@@ -181,9 +209,12 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
                 if saveName[-1]!='/':
                     saveName += '/'
                 saveName += "plots/"
+               
+                if qieBarcode != "":
+                    qieInfo += ", Barcode " + qieBarcode
                 
                 if qieUniqueID != "": 
-                    qieInfo += ", Card ID "+qieUniqueID
+                    qieInfo += "  UID "+qieUniqueID
                 else:
                     qieUniqueID = "UnknownID"
                 
@@ -205,26 +236,6 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
                 graph.GetYaxis().SetTitle("Lin ADC")
                 graph.GetYaxis().SetTitleOffset(1.2)
                 graph.GetXaxis().SetTitle("Charge fC")
-                xVals = graph.GetX()
-                exVals = graph.GetEX()
-                yVals = graph.GetY()
-                eyVals = graph.GetEY()
-                residuals = []
-                residualErrors = []
-                #residualsY = []
-                #residualErrorsY = []
-                eUp = []
-                eDown = []
-                N = graph.GetN()
-                x = []
-                y = []
-
-                for i in range(N):
-                    residuals.append((yVals[i]-fitLine.Eval(xVals[i]))/max(yVals[i],0.001))
-                    xLow = (xVals[i]-exVals[i])
-                    xHigh = (xVals[i]+exVals[i])
-                    residualErrors.append((eyVals[i]/max(yVals[i],0.001)))
-                    x.append(xVals[i])
 
 
                 resArray = array('d',residuals)
@@ -339,9 +350,9 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieUniqueID = ""
             slope = fitLines[irange][icapID].GetParameter(1)
             uncertainty = fitLines[irange][icapID].GetParError(1)
 
-            params[irange].append([slope,offset,uncertainty])
+            params[irange].append([slope,offset,uncertainty,maxResiduals[irange][icapID]])
             if shuntMult==1:
-                unshunted_params[irange].append([slope,offset,uncertainty])
+                unshunted_params[irange].append([slope,offset,uncertainty,maxResiduals[irange][icapID]])
                 
         
        # print  high_range

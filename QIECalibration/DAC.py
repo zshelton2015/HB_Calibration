@@ -48,9 +48,14 @@ def setDAC_multi( cm = "", boardsOn = "", quiet = False):
     dm = " -dm %s" % eval("0b%s" % d)
     #print " d =", d
     #print "dm =", dm
-    
-    os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector %s%s" % (cm + dm, "" if not quiet else " -quiet") )
+
+    p = subprocess.Popen("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector %s"% (cm + dm),shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
+    if not quiet:
+        print p.stdout.read()
+#    os.system("export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital; /home/hep/ChargeInjector/DAC/mcc-libhid_SplitDigital/dacQinjector %s%s" % (cm + dm, "" if not quiet else " -quiet") )
     sleep(1)
+    return p.stdout.read()
 
 def setDAC_multi_old( cm = "", dm = 0 ):
     if cm != "":

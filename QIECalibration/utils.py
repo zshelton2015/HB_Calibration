@@ -7,8 +7,8 @@ import ROOT
 #  Ex: TCanvas.c1.SaveAs("myplot.png")      #
 #      Quiet(c1.SaveAs)("myplot.png")       #
 #############################################
-#def Quiet(func, level = ROOT.kInfo + 1):
-def Quiet(func, level = 1001):
+def Quiet(func, level = ROOT.kInfo + 1):
+#def Quiet(func, level = 1001):
     def qfunc(*args,**kwargs):
         oldlevel = ROOT.gErrorIgnoreLevel
         ROOT.gErrorIgnoreLevel = level

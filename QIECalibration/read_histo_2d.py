@@ -10,7 +10,7 @@ import re
 findSerial = re.compile(r"(?:QIECalibration_)(\d+)(?:\.root)")
 
 # TODO: Un-hardcode this
-QIcalibrationFile = "/home/hep/HB_Calibration/ChargeInjector/old_InjectorCalibration_highCurrent/ChargeInjectorCalibrations.db"
+QIcalibrationFile = "/home/hep/HB_Calibration/ChargeInjector/InjectorCalibration_highCurrent/ChargeInjectorCalibrations.db"
 
 # Flip front and back adapters
 flipped = False 

@@ -7,8 +7,17 @@ from os import system, popen, getcwd, path
 from mapLinks import mapLinks
 from ast import literal_eval
 import sys
+import subprocess
+from DAC import setDAC_multi
+
 
 def qieScan(outDir, linkMask = 0, serialNum = 1, uHTR = 1, pointF = "full_hb_scan_test.txt"):
+
+    originalSTDOUT = sys.stdout
+
+    stdOutDump = open("%s/calibrationScanOutput.stdout"%outDir, 'w')
+    sys.stdout = stdOutDump
+
     startCommands = dedent("""\
                     test
                     qie
@@ -27,28 +36,38 @@ def qieScan(outDir, linkMask = 0, serialNum = 1, uHTR = 1, pointF = "full_hb_sca
     system("mkdir -p %s" % outDir)
     print "About to take histo run" 
     # Take histo run
+    cmds = ["source %s/setenv.sh; uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (getcwd(), uHTR*4)]
+    output = subprocess.Popen(cmds, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    print output.communicate()[0]
+
     #popen("source %s/setenv.sh; uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (getcwd(), uHTR*4)).read()
-    system("source %s/setenv.sh; uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (getcwd(), uHTR*4))
+    # system("source %s/setenv.sh; uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (getcwd(), uHTR*4))
+    print "mv QIECalibration_%s.root %s" % (serialNum, outDir)
+    
+    cmds = ["mv QIECalibration_%s.root %s" % (serialNum, outDir)]
 
-    system("mv QIECalibration_%s.root %s" % (serialNum, outDir))
+    output = subprocess.Popen(cmds, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print output.communicate()[0]
 
 
-if __name__ == "__main__":
-    parser = ArgumentParser("QIE Calibration Scan")
-    parser.add_argument('-d', dest="topDir", default="data", help="top level directory to store qie scan data and fits")
-    parser.add_argument('-c', '--cardLayout', default="cardLayout.txt", help="text file specifying teststand layout")
-    #parser.add_argument('--noscan', action = "store_true", help = "process existing scan"
-    parser.add_argument('--fit', action="store_true", help="run fits after qie scan")
-    parser.add_argument('--saveGraphs', action="store_true", help="save graphs from fits")
-    parser.add_argument('--skipShunts', action="store_true", help="skip shunts from fits")
-    args = parser.parse_args()
+    print setDAC_multi(0,quiet=True)
 
-    if not path.exists(args.cardLayout):
-        print "Cannot find card layout file %s!" % args.cardLayout
+
+    sys.stdout = originalSTDOUT
+
+
+def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False, saveGraphs=False, skipShunts = False, shortShunts = False, fineScan = False):
+
+    originalSTDOUT = sys.stdout
+
+    if not path.exists(cardLayout):
+        print "Cannot find card layout file %s!" % cardLayout
         sys.exit()
 
 
-    with open(args.cardLayout, "r") as f:
+
+    with open(cardLayout, "r") as f:
         for i,line in enumerate(f):
             if line[0] == "#":
                 # Skip comments
@@ -68,19 +87,21 @@ if __name__ == "__main__":
     today = datetime.now().strftime("%m-%d-%Y")
 
     # Will create directory if it doesn't exist, nothing otherwise
-    system("mkdir -p %s/%s" % (args.topDir, today))
+    system("mkdir -p %s/%s" % (topDir, today))
 
-    dataDir = "%s/%s" % (args.topDir, today)
+    dataDir = "%s/%s" % (topDir, today)
 
     # Run number to create
-    run = len(glob("%s/*" % dataDir)) + 1
+    run = len(glob("%s/Run*" % dataDir)) + 1
 
     # Create run directory
     runDir = "%s/Run_%d/" % (dataDir, run)
     system("mkdir -p %s" % runDir)
-
+    
+    print "%s, Running Mapping Script"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     # Map links
-    histoMap = mapLinks(outF = runDir + "histoMap.txt", configFile = args.cardLayout, tmpDir = runDir + "tmpLinkMap")
+    histoMap = mapLinks(outF = runDir + "histoMap.txt", configFile = cardLayout, tmpDir = runDir + ".tmpLinkMap")
+    sys.stdout = originalSTDOUT
     
     if len(histoMap) == 0:
         # Mapping failed. Terminate scan.
@@ -108,11 +129,37 @@ if __name__ == "__main__":
     # Run QIE scan        
 
     pointF = "full_hb_scan_test.txt"
-    if args.skipShunts:
+    if skipShunts:
         pointF = "noshunt_hb_scan_test.txt"
+    if shortShunts:
+        pointF = "shortShunt_hb_scan_test.txt"
+    if fineScan:
+        pointF = "noshunt_hb_fine_scan_test.txt"
         
+    print "%s, Starting Calibration Scan"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     qieScan(outDir = runDir, linkMask = linkMask, serialNum = serialNum, uHTR = uHTR, pointF = pointF)
 
+    sys.stdout = originalSTDOUT
+
     # Compute fits
-    if args.fit:
-        system("./RedoFit_linearized_2d.py -d %s%s%s" % (runDir, " --saveGraphs" if args.saveGraphs else "", " --shuntList [1]" if args.skipShunts else ""))
+    if doFit:
+        print "%s, Staring Fit"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        system("./RedoFit_linearized_2d.py -d %s%s%s%s" % (runDir, " --saveGraphs" if saveGraphs else "", " --shuntList [1]" if skipShunts else ""," --shuntList [1,6,11.5]" if shortShunts else ""))
+
+    return runDir
+
+if __name__ == "__main__":
+    parser = ArgumentParser("QIE Calibration Scan")
+    parser.add_argument('-d', dest="topDir", default="data", help="top level directory to store qie scan data and fits")
+    parser.add_argument('-c', '--cardLayout', default="cardLayout.txt", help="text file specifying teststand layout")
+    #parser.add_argument('--noscan', action = "store_true", help = "process existing scan"
+    parser.add_argument('--fit', action="store_true", help="run fits after qie scan")
+    parser.add_argument('--saveGraphs', action="store_true", help="save graphs from fits")
+    parser.add_argument('--skipShunts', action="store_true", help="skip shunts")
+    parser.add_argument('--shortShunts', action="store_true", help="run only shunts 1, 6, & 11.5")
+    parser.add_argument('--fineScan',action="store_true",default=False,help="Run a fine scan over range 3")
+    args = parser.parse_args()
+
+    QIECalibration(topDir = args.topDir, cardLayout = args.cardLayout, doFit = args.fit, saveGraphs=args.saveGraphs, skipShunts = args.skipShunts, shortShunts = args.shortShunts, fineScan = args.fineScan)
+
