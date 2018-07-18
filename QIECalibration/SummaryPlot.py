@@ -61,8 +61,14 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     # Get required arguments from options
     run = run1[0]
     date = date1[0]
-    tester = tester1[0]
-    gROOT.SetBatch(True)
+    if type(tester1) == type([]):
+        tester = tester1[0]
+    elif type(tester1) == type(""):
+        tester = tester1
+    else:
+        print "Tester type error"
+        
+    ROOT.SetBatch(True)
     
     qieList = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
@@ -94,7 +100,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     FailedCards = []
     FailedSlopes =[]
     FailedOffset = []
-    #Set Axes Digits
+    #Grab File Names
     if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
         os.makedirs("data/%s/Run_%s/SummaryPlots"%(date,run))
     if(runAll or not uid is None):
@@ -103,6 +109,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         files = []
         for f in dbnames:
             files.append(glob.glob("data/%s/Run_%s/%s"%(date,run,f))[0])
+    print files
     MergeDatabases(files, "data/%s/Run_%s/"%(date, run),"MergedDatabaseRun%s.db"%run)
     xyz1234 = sqlite3.connect("data/%s/Run_%s/MergedDatabaseRun%s.db"%(date, run,run))
     cursor = xyz1234.cursor()
@@ -132,10 +139,8 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         FailedCards = []
 	if logoutput:
             originalSTDOUT = sys.stdout
-	    originalSTDERR = sys.stderr 
             stdOutDump = open("data/%s/Run_%d/SummaryPlots/SummaryPlot.stdout"%(date,run), 'w+')
             sys.stdout = stdOutDump
-	    sys.stderr = stdOutDump		
         #if not os.path.exists("data/%s/Run_%s/SummaryPlots/TotalPlots"%(date, run)):
             #os.makedirs("data/%s/Run_%s/SummaryPlots/TotalPlots"%(date, run))
             # Modify rootout change title of output ROOT file
