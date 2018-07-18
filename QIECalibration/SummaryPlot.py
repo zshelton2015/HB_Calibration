@@ -68,7 +68,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     else:
         print "Tester type error"
         
-    ROOT.SetBatch(True)
+    gROOT.SetBatch(True)
     
     qieList = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
@@ -465,7 +465,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     rootout.Close()
     if logoutput:
         sys.stdout = originalSTDOUT
-	sys.stderr = originalSTDERR
+#	sys.stderr = originalSTDERR
 
 def slopeFailTh(sh, r, name,slope,thshunt = .3,pct = .1):
     maxt=(thshunt/sh)+(thshunt/sh)*THRESHOLD
