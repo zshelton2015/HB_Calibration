@@ -25,7 +25,7 @@ people = {'Brooks':'Brooks McMaster',
           'Grace':'Grace Cummings',
           'Joe':'Joe Pastika',
           'Kamal':'Kamal Lamichhane',
-          'Loriza':'Loriza Hasa',
+          ':Loriza':'Loriza Hasa',
           'Mark':'Mark Saunders',
           'Nadja':'Nadja Strobbe',
           'Nesta':'Nesta Lenhert',
@@ -590,7 +590,7 @@ def offsetFail(r,offset,name):
             # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
             failure=True
     if r == 1:
-        if (offset > 12 or offset < -12):
+        if (offset > 13 or offset < -13):
             # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
             failure=True
     if r == 2:

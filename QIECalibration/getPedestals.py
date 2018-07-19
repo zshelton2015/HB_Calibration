@@ -26,7 +26,7 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
         os.mkdir("%s/PedestalPlots"%dirName)
     
     
-    _file = TFile("%s/PedestalPlots/pedestalMeasurement_%s_%s.root"%(dirName,date,run),"update")
+    _file = TFile.Open("%s/PedestalPlots/pedestalMeasurement_%s_%s.root"%(dirName,date,run),"update")
 
     c1 = TCanvas()
     c1.Divide(2,2)

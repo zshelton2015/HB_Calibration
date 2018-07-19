@@ -245,7 +245,7 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
     qieParams={}
     cursor = {}
     for uID in uID_list:
-        outputGraphFile = TFile("%s/fitResults_%s.root"%(outputDirectory, uID),"recreate")
+        outputGraphFile = TFile.Open("%s/fitResults_%s.root"%(outputDirectory, uID),"recreate")
 #        outputGraphFile.mkdir("adcVsCharge")
         outputGraphFile.mkdir("LinadcVsCharge")
         outputGraphFile.mkdir("fitLines")
@@ -307,8 +307,8 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
     #print dirStructure
     #print date
     #print run
-    _filePeds = TFile("%sPedestalPlots/pedestalMeasurement_%s_%s.root"%(outputDirectory,date, run),"recreate")
-    _filePeds.Close()
+    #_filePeds = TFile.Open("%sPedestalPlots/pedestalMeasurement_%s_%s.root"%(outputDirectory,date, run),"recreate")
+    #_filePeds.Close()
     print "Now Get Pedestals"
     pickle.dump(pedestal_graphs_shunt, open("debug.p", "wb"))
     pedestalVals = getPedestals(pedestal_graphs_shunt,shuntMult_list,histoList,outputDirectory, date, run)
