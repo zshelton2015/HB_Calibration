@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ROOT import *
 import sys
 import os
@@ -15,58 +16,10 @@ try:
 except NameError:
     from utils import Quiet
 
-def saveOnFail(inputDir):
-    fileList = []
-    for root,dirnames,filenames in os.walk(os.path.join(inputDir,"Submission")):
-        for filename in fnmatch.filter(filenames,'*.json'):
-            fileList.append(os.path.join(root,filename))
-    
-    for fName in fileList:
-        rootFile = TFile(fName.replace(".json",".root").replace("70/","70/fitResults_"),'read')
-
-        tGraphDir = rootFile.Get("LinadcVsCharge")
-        fitLineDir = rootFile.Get("fitLines")
-        ###################################################
-        # Values to get from json file
-        ###################################################
-        qieBarcode = ""
-        qieUniqueID = ""
-        qieNumber = 1
-        i_capID = 0
-        i_range = 0
-        shuntMult = 1
-        useCalibrationMode = True
-        verbose = False
-    
-    
-        ###################################################
-        # Getting Values From json
-        ###################################################
-        inFile = open(fName,"r")
-    
-        jsonFile = json.load(inFile)
-
-        
-        qieUniqueID = os.path.splitext(os.path.basename(fName))[0]
-   
-        if jsonFile['Result']:
-            continue
-
-
-        failModeList = []
-        for failModeOffset in jsonFile['Comments']['Offset']:
-            if failModeOffset not in failModeList:
-                failModeList.append(failModeOffset)
-        for failModeSlope in jsonFile['Comments']['Slope']:
-            if failModeSlope not in failModeList:
-                failModeList.append(failModeSlope)
-        for failModeFit in jsonFile['Comments']['Poor fit']:
-            if failModeFit not in failModeList:
-                failModeList.append(failModeFit)
-
-        for failMode in failModeList:
-            shuntMult, i_range, qieNumber, i_capID = failMode
-
+def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
+            tGraphDir = rootFile.Get("LinadcVsCharge")
+            fitLineDir = rootFile.Get("fitLines")
+            fName = rootFile.GetName()
             gName = "LinADCvsfC_%s_range_%s_shunt_%s_capID_%s_linearized"%(qieNumber,i_range,str("%.1f"%shuntMult).replace(".","_"),i_capID)
 
             graph = tGraphDir.Get(gName)
@@ -74,9 +27,12 @@ def saveOnFail(inputDir):
             fitLine = fitLineDir.Get("fit_%s"%gName)
 
             qieInfo = ""
-        
+
+            qieBarcode = ""
+            qieUniqueID = ""
+
+            useCalibrationMode = True
             outputDir = os.path.dirname(fName)
-        
             saveName = outputDir
             if saveName[-1]!='/':
                 saveName += '/'
@@ -213,6 +169,58 @@ def saveOnFail(inputDir):
             else:
                 c1.SaveAs(saveName)
             #c1.SaveAs(saveName)
+
+def saveOnFail(inputDir):
+    fileList = []
+    for root,dirnames,filenames in os.walk(os.path.join(inputDir,"Submission")):
+        for filename in fnmatch.filter(filenames,'*.json'):
+            fileList.append(os.path.join(root,filename))
+    
+    for fName in fileList:
+        rootFile = TFile.Open(fName.replace(".json",".root").replace("70/","70/fitResults_"),'read')
+
+        ###################################################
+        # Values to get from json file
+        ###################################################
+        qieBarcode = ""
+        qieUniqueID = ""
+        qieNumber = 1
+        i_capID = 0
+        i_range = 0
+        shuntMult = 1
+        useCalibrationMode = True
+        verbose = False
+    
+    
+        ###################################################
+        # Getting Values From json
+        ###################################################
+        inFile = open(fName,"r")
+    
+        jsonFile = json.load(inFile)
+
+        
+        qieUniqueID = os.path.splitext(os.path.basename(fName))[0]
+   
+        if jsonFile['Result']:
+            continue
+
+
+        failModeList = []
+        for failModeOffset in jsonFile['Comments']['Offset']:
+            if failModeOffset not in failModeList:
+                failModeList.append(failModeOffset)
+        for failModeSlope in jsonFile['Comments']['Slope']:
+            if failModeSlope not in failModeList:
+                failModeList.append(failModeSlope)
+        for failModeFit in jsonFile['Comments']['Poor fit']:
+            if failModeFit not in failModeList:
+                failModeList.append(failModeFit)
+
+        for failMode in failModeList:
+
+            shuntMult, i_range, qieNumber, i_capID = failMode
+            saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID)
 
 if __name__ == '__main__':
     saveOnFail(sys.argv[1])
