@@ -198,7 +198,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
 
                 #Create Histograms for the Offsets
       	       	maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
-		maximumo,minimumo = maxmin[0]
+                maximumo,minimumo = maxmin[0]
                 maximumo  = max(plotBoundaries_offset[r], maximum)
                 minimumo  = min(-1*plotBoundaries_offset[r], minimum)
                 test = []
@@ -208,6 +208,14 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 histoffset[-1].GetXaxis().SetTitle("Offset")
                 histoffset[-1].GetYaxis().SetTitle("Frequency")
                 gPad.SetLogy(1)
+            	hline = TLine(0,0,0,0)
+            	hline.SetLineColor(2)
+            	lline = TLine(0,0,0,0)
+            	lline.SetLineColor(2)
+            	loline = TLine(0,0,0,0)
+            	loline.SetLineColor(2)
+            	holine = TLine(0,0,0,0)
+            	holine.SetLineColor(2)
 
 
                 if adapterTest:
@@ -544,9 +552,10 @@ def slopeFailTh(sh, r, name,slope,thshunt = .3,pct = .1):
     return failure
 # THIS PASS FAIL USES HARDCODED SLOPE VALUES TO DETERMINE ERRORS
 def slopeFailH(sh, r, name,slope,thshunt = .3,pct = .1):
-    from selectionCuts.py import *
+    from selectionCuts import *
     failure = False
-    if slope<failureconds[sh][1] or slope > failureconds[sh][1]
+    if slope<failureconds[sh][1] or slope > failureconds[sh][1]:
+        failure = True
     # if sh ==1:
     #     if (.28 > slope or slope > .331):
     #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
