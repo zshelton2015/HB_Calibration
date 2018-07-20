@@ -614,7 +614,7 @@ def poorfit(maxr, r):
         if (maxr > 35):
             failure=True
     if r == 2:
-        if (maxr > 300):
+        if (maxr > 301):
             failure=True
     if r == 3:
         if (maxr > 2000):
