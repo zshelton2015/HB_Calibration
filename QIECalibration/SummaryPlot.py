@@ -97,13 +97,14 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     #Grab File Names
     if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
         os.makedirs("data/%s/Run_%s/SummaryPlots"%(date,run))
-    if(runAll or not uid is None):
+    if(runAll or total or not uid is None):
         files = glob.glob("data/%s/Run_%s/qieCalibrationParameters*.db"%(date,run))
-    elif(len(dbnames) != 0):
-        files = []
-        for f in dbnames:
-            files.append(glob.glob("data/%s/Run_%s/%s"%(date,run,f))[0])
-    print files
+    elif(dbnames != None):    
+	if(len(dbnames) != 0):
+            files = []
+            for f in dbnames:
+                files.append(glob.glob("data/%s/Run_%s/%s"%(date,run,f))[0])
+    	    print files
     MergeDatabases(files, "data/%s/Run_%s/"%(date, run),"MergedDatabaseRun%s.db"%run)
     xyz1234 = sqlite3.connect("data/%s/Run_%s/MergedDatabaseRun%s.db"%(date, run,run))
     cursor = xyz1234.cursor()
@@ -142,66 +143,58 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
             # Modify rootout change title of output ROOT file
 	if(verbose):
 	    print "Now analyzing card %s" %nameid
-	rootout = TFile("data/%s/Run_%s/fitResults_%s.root" %(date, run, name), "update")
-	rootout.cd("SummaryPlots")
-	hline = TLine(0,0,0,0)
-	hline.SetLineColor(2)
-	lline = TLine(0,0,0,0)
-	lline.SetLineColor(2)
-	loline = TLine(0,0,0,0)
-	loline.SetLineColor(2)
-	holine = TLine(0,0,0,0)
-	holine.SetLineColor(2)
-        for ra in bins:
-            r = ra[0]
-            for shu in shunts:
-                sh = shu[0]
-                if (r == 2 or r == 3) and (sh != 1):
-                    continue
-                # Fetch the values of slope and offset for the corresponding shunt and range
-                #values = cursor.execute("select slope,offset from qieshuntparams where range=%i and shunt=%.1f and id = '%s';" % (r, sh,name)).fetchall()
-                values = cursor.execute("select slope, range, offset, qie, capid, id, maxResidual, (SELECT slope from qieshuntparams where id=p.id and qie=p.qie and capID=p.capID and range=p.range and shunt=1) from qieshuntparams as p where range = %i and shunt = %.1f and id = '%s';"%(r,sh,name)).fetchall()
+	
+        if(runAll):
+	    for ra in bins:
+                r = ra[0]    
+                for shu in shunts:
+                    sh = shu[0]
+                    if (r == 2 or r == 3) and (sh != 1):
+                        continue
+                    # Fetch the values of slope and offset for the corresponding shunt and range
+                    #values = cursor.execute("select slope,offset from qieshuntparams where range=%i and shunt=%.1f and id = '%s';" % (r, sh,name)).fetchall()
+                    values = cursor.execute("select slope, range, offset, qie, capid, id, maxResidual, (SELECT slope from qieshuntparams where id=p.id and qie=p.qie and capID=p.capID and range=p.range and shunt=1) from qieshuntparams as p where range = %i and shunt = %.1f and id = '%s';"%(r,sh,name)).fetchall()
 
                 # Fetch Max and minimum values for slope of shunt
-                maxmin = cursor.execute("select max(slope),min(slope) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
-                maximum, minimum = maxmin[0]
-                maximums = max(plotBoundaries_slope[1]/sh, maximum+0.01)
-                minimums = min(plotBoundaries_slope[0]/sh, minimum-0.01)
-                if sh == 1:
-                    maximum1 = maximums
-                    minimum1 = minimums
-                #Creates Canvases for each Shunt and Range(TH1D)
-                c.append(TCanvas("Card_%s_Shunt_%.1f-Range_%i" % (name, sh, r), "histo"))
-                c[-1].Divide(2,1)
+                    maxmin = cursor.execute("select max(slope),min(slope) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
+                    maximum, minimum = maxmin[0]
+                    maximums = max(plotBoundaries_slope[1]/sh, maximum+0.01)
+                    minimums = min(plotBoundaries_slope[0]/sh, minimum-0.01)
+                    if sh == 1:
+                        maximum1 = maximums
+                        minimum1 = minimums
+                    #Creates Canvases for each Shunt and Range(TH1D)
+                    c.append(TCanvas("Card_%s_Shunt_%.1f-Range_%i" % (name, sh, r), "histo"))
+                    c[-1].Divide(2,1)
 
-                c[-1].cd(1)
+                    c[-1].cd(1)
                 #Create Histograms for the shunt slopes
-                histshunt.append(TH1D("SLOPE_Sh_%s_R_%i" %(str(sh).replace(".",""),r),"%s Shunt %.1f - Range %i" % (name, sh, r), 100, minimums, maximums))
-                histshunt[-1].SetTitle("SLOPE SH: %.1f R: %d"%(sh,r))
-                histshunt[-1].GetXaxis().SetTitle("Slope")
-                histshunt[-1].GetYaxis().SetTitle("Frequency")
-                gPad.SetLogy(1)
+                    histshunt.append(TH1D("SLOPE_Sh_%s_R_%i" %(str(sh).replace(".",""),r),"%s Shunt %.1f - Range %i" % (name, sh, r), 100, minimums, maximums))
+                    histshunt[-1].SetTitle("SLOPE SH: %.1f R: %d"%(sh,r))
+                    histshunt[-1].GetXaxis().SetTitle("Slope")
+                    histshunt[-1].GetYaxis().SetTitle("Frequency")
+                    gPad.SetLogy(1)
 
                 #Create 2D histogram of slope of shunt N vs slope of shunt 1
-                if(hist2D):
-                    histSlopeNvSlope1.append(TH2D("Slope_Shunt_%s_vs_Shunt_1_R_%i"%(str(sh).replace(".",""),r),"%s Slope of Shunt %.1f vs Shunt 1 - Range %i"%(name,sh,r),100,minimum1,maximum1,100,minimums,maximums))
-                    histSlopeNvSlope1[-1].GetXaxis().SetTitle("Shunt 1 Slope")
-                    histSlopeNvSlope1[-1].GetYaxis().SetTitle("Shunt %.1f Slope"%sh)
-
-                #Create 2D histogram of slope vs qie
-                if(slVqie):
-                    histSlvQie.append(TH2D("SlopeVsQIE_Shunt_%s_Range_%d"%(str(sh).replace(".",""),r),"%s Slope Vs QIE Shunt %.1f Range %d"%(name,sh,r),16,0.5,16.5,40,minimums,maximums))
-                    histSlvQie[-1].GetXaxis().SetTitle("QIE")
-                    histSlvQie[-1].GetYaxis().SetTitle("Slope")
+                    if(hist2D):
+                        histSlopeNvSlope1.append(TH2D("Slope_Shunt_%s_vs_Shunt_1_R_%i"%(str(sh).replace(".",""),r),"%s Slope of Shunt %.1f vs Shunt 1 - Range %i"%(name,sh,r),100,minimum1,maximum1,100,minimums,maximums))
+                        histSlopeNvSlope1[-1].GetXaxis().SetTitle("Shunt 1 Slope")
+                        histSlopeNvSlope1[-1].GetYaxis().SetTitle("Shunt %.1f Slope"%sh)
+    
+                    #Create 2D histogram of slope vs qie
+                    if(slVqie):
+                        histSlvQie.append(TH2D("SlopeVsQIE_Shunt_%s_Range_%d"%(str(sh).replace(".",""),r),"%s Slope Vs QIE Shunt %.1f Range %d"%(name,sh,r),16,0.5,16.5,40,minimums,maximums))
+                        histSlvQie[-1].GetXaxis().SetTitle("QIE")
+                        histSlvQie[-1].GetYaxis().SetTitle("Slope")
 
                 #Create histogram of shunt factor
-                if(shFac):
-                    histShuntFactor.append(TH1D("ShuntFactor_Sh_%s_R_%.i"%(str(sh).replace(".",""),r),"Shunt Factor Shunt %.1f Range %i"%(sh,r),100,sh-1,sh+1))
-                    histShuntFactor[-1].GetXaxis().SetTitle("Shunt Factor")
-                    histShuntFactor[-1].GetYaxis().SetTitle("Frequency")
+                    if(shFac):
+                        histShuntFactor.append(TH1D("ShuntFactor_Sh_%s_R_%.i"%(str(sh).replace(".",""),r),"Shunt Factor Shunt %.1f Range %i"%(sh,r),100,sh-1,sh+1))
+                        histShuntFactor[-1].GetXaxis().SetTitle("Shunt Factor")
+                        histShuntFactor[-1].GetYaxis().SetTitle("Frequency")
 
                 #Create Histograms for the Offsets
-		maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
+      	       	maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
 		maximumo,minimumo = maxmin[0]
                 maximumo  = max(plotBoundaries_offset[r], maximum)
                 minimumo  = min(-1*plotBoundaries_offset[r], minimum)
@@ -239,80 +232,81 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         hoffsets[sh][r]['back'].SetTitle("Slopes  Back Adapter  Shunt %.1f Range %d" % (sh,r))
 		
                 # Fills the histograms with the values fetched above
-                for val in values:
-                    #slope, offset = val
-                    slope, rang, offset,qie,capid , id,maxr, slSh1= val
-                    if slopeFailH(sh,rang,id,slope):
-                        FailedSlope.append((sh,rang,qie,capid))
-			Result = False
-			if(verbose):                            
-			    print "Slope in CAPID %i in QIE %i in Shunt %.1f and Range %i"%(capid,qie,sh,r)
-                    elif offsetFail(rang,offset,id):
-                        FailedOffset.append((sh,rang,qie,capid))
-			Result = False
-			if(verbose):                            
-			    print "Offset in CAPID %i in QIE %i in Shunt %.1f and Range %i"%(capid,qie,sh,r)
-		    if poorfit(maxr,rang):
-			Result = False
-			poorfits.append((sh,rang,qie,capid))
+                    for val in values:
+                        #slope, offset = val
+                        slope, rang, offset,qie,capid , id,maxr, slSh1= val
+                        if slopeFailH(sh,rang,id,slope):
+                            FailedSlope.append((sh,rang,qie,capid))
+		     	    Result = False
+			    if(verbose):                            
+			        print "Slope in CAPID %i in QIE %i in Shunt %.1f and Range %i"%(capid,qie,sh,r)
+                        elif offsetFail(rang,offset,id):
+                            FailedOffset.append((sh,rang,qie,capid))
+			    Result = False
+			    if(verbose):                            
+			        print "Offset in CAPID %i in QIE %i in Shunt %.1f and Range %i"%(capid,qie,sh,r)
+		        if poorfit(maxr,rang):
+			    Result = False
+			    poorfits.append((sh,rang,qie,capid))
 			if (verbose):
 			    print "Poor fitting results in CAPID %i in QIE %i in Shunt %.1f and Range %i"%(capid,qie,sh,r)
-                    c[-1].cd(1)
-                    histshunt[-1].Fill(slope)
-		    histshunt[-1].Draw()
-		    hline.DrawLine(failureconds[sh][1],0,failureconds[sh][1],histshunt[-1].GetMaximum()+1)
-	            hline.Draw("same")
-		    lline.DrawLine(failureconds[sh][0],0,failureconds[sh][0],histshunt[-1].GetMaximum()+1)
-		    lline.Draw("same")
-                    c[-1].cd(2)
-                    histoffset[-1].Fill(offset)
-                    histoffset[-1].Draw()
-                    if adapterTest:
-                        hslopes[sh][r]['total'].Fill(slope)
-                        hoffsets[sh][r]['total'].Fill(offset)
-                        if qie in backAdapter:
-                            hslopes[sh][r]['back'].Fill(slope)
-                            hoffsets[sh][r]['back'].Fill(offset)
-                        else:
-                            hslopes[sh][r]['front'].Fill(slope)
-                            hoffsets[sh][r]['front'].Fill(offset)
+                        c[-1].cd(1)
+                        histshunt[-1].Fill(slope)
+		        histshunt[-1].Draw()
+		        hline.DrawLine(failureconds[sh][1],0,failureconds[sh][1],histshunt[-1].GetMaximum()+1)
+	                hline.Draw("same")
+		        lline.DrawLine(failureconds[sh][0],0,failureconds[sh][0],histshunt[-1].GetMaximum()+1)
+		        lline.Draw("same")
+                        c[-1].cd(2)
+                        histoffset[-1].Fill(offset)
+                        histoffset[-1].Draw()
+                        if adapterTest:
+                            hslopes[sh][r]['total'].Fill(slope)
+                            hoffsets[sh][r]['total'].Fill(offset)
+                            if qie in backAdapter:
+                                hslopes[sh][r]['back'].Fill(slope)
+                                hoffsets[sh][r]['back'].Fill(offset)
+                            else:
+                                hslopes[sh][r]['front'].Fill(slope)
+                                hoffsets[sh][r]['front'].Fill(offset)
                     #c[-1].cd(3)
-                    if(slVqie):
-                        histSlvQie[-1].Fill(qie,slope)
-                    if(hist2D):
-                        histSlopeNvSlope1[-1].Fill(slSh1,slope)
-                    if(shFac):
-                        try:
-                            histShuntFactor[-1].Fill(slSh1/slope)
-                        except ZeroDivisionError:
-                            print "Divide by Zero Error: %s Shunt %.1f Range %d"%(name,sh,r)
-		if r == 0:
-		    holine.DrawLine(-.5,0,-.5,histoffset[-1].GetMaximum()+1)
-	       	    holine.Draw("same")	
-		else:
-		    holine.DrawLine(failcondo[r][0],0,failcondo[r][0],histoffset[-1].GetMaximum()+1)
-	       	    holine.Draw("same")
-	            loline.DrawLine(-failcondo[r][0],0,-failcondo[r][0],histoffset[-1].GetMaximum()+1)
-	            loline.Draw("same")
-	        histshunt[-1].Write()
-	        histoffset[-1].Write()
-	        c[-1].Update()
+                        if(slVqie):
+                            histSlvQie[-1].Fill(qie,slope)
+                        if(hist2D):
+                            histSlopeNvSlope1[-1].Fill(slSh1,slope)
+                        if(shFac):
+                            try:
+                                histShuntFactor[-1].Fill(slSh1/slope)
+                            except ZeroDivisionError:
+                                print "Divide by Zero Error: %s Shunt %.1f Range %d"%(name,sh,r)
+		    if r == 0:
+		        holine.DrawLine(-.49,0,-.49,histoffset[-1].GetMaximum()+1)
+	       	        holine.Draw("same")
+			loline.DrawLine(-.51,0,.-.51,histoffset[-1].GetMaximum()+1)
+		    else:
+		        holine.DrawLine(failcondo[r][0],0,failcondo[r][0],histoffset[-1].GetMaximum()+1)
+	       	        holine.Draw("same")
+	                loline.DrawLine(-failcondo[r][0],0,-failcondo[r][0],histoffset[-1].GetMaximum()+1)
+	                loline.Draw("same")
+	            histshunt[-1].Write()
+	            histoffset[-1].Write()
+	            c[-1].Update()
                 #c[-1].SaveAs("data/%s/Run_%s/SummaryPlots/ImagesOutput/CARD_%s_SHUNT_%s_RANGE_%i.png"%(date, run, name, str(sh).replace(".",""), r))
-                if(images):
+                    if(images):
                     #c[-1].SaveAs("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(date, run, name,name, str(sh).replace(".",""), r))
-		    Quiet(c[-1].SaveAs)("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(date, run, name,name, str(sh).replace(".",""), r))
-                if(hist2D):
-                    histSlopeNvSlope1[-1].Write()
-                if(shFac):
-                    histShuntFactor[-1].Write()
-                if(slVqie):
-                    histSlvQie[-1].Write()
-                if(verbose):
-                    print "Card %s Shunt %.1f Range %d Finished"%(name,sh,r)
-	FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit}})
-	cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
-	file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
-	json.dump(cardplaceholder, file1)
+		        Quiet(c[-1].SaveAs)("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(date, run, name,name, str(sh).replace(".",""), r))
+                    if(hist2D):
+                        histSlopeNvSlope1[-1].Write()
+                    if(shFac):
+                        histShuntFactor[-1].Write()
+                    if(slVqie):
+                        histSlvQie[-1].Write()
+                    if(verbose):
+                        print "Card %s Shunt %.1f Range %d Finished"%(name,sh,r)
+	    FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit}})
+	    cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
+	    file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
+	    json.dump(cardplaceholder, file1)
 	    
         if (adapterTest):
             rundir = "data/%s/Run_%s/SummaryPlots" % (date, run)
@@ -361,7 +355,14 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     if(images):
                         Quiet(c[-1].SaveAs)("%s/%s/offsets_shunt_%s_range_%d.png" % (rundir,outdir,str(sh).replace(".","_"),r))
     if (total):
-        name = nameList[0]
+	hline = TLine(0,0,0,0)
+	hline.SetLineColor(2)
+	lline = TLine(0,0,0,0)
+	lline.SetLineColor(2)
+	loline = TLine(0,0,0,0)
+	loline.SetLineColor(2)
+	holine = TLine(0,0,0,0)
+	holine.SetLineColor(2)
         if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
             os.makedirs("data/%s/Run_%s/SummaryPlots"%(date,run))
         if not os.path.exists("data/%s/Run_%s/SummaryPlots/TotalOutput"%(date, run)):
@@ -376,7 +377,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     continue
                 # Fetch the values of slope and offset for the corresponding shunt and range
                 # values = cursor.execute("select slope,offset from qieshuntparams where range=%i and shunt=%.1f ;" % (r, sh)).fetchall()
-                values = cursor.execute("select slope, range, offset, qie, capid, id, maxResidual,(SELECT slope from qieshuntparams where id=p.id and qie=p.qie and capID=p.capID and range=p.range and shunt=1) from qieshuntparams as p where range = %i and shunt = %.1f;"%(r,sh)).fetchall()
+                values = cursor.execute("select slope, offset from qieshuntparams as p where range = %i and shunt = %.1f;"%(r,sh)).fetchall()
                 # Fetch Max and minimum values for slope of shunt
                 maxmin = cursor.execute("select max(slope),min(slope) from qieshuntparams where range=%i and shunt = %.1f;" % (r,sh)).fetchall()
                 maximum, minimum = maxmin[0]
@@ -388,7 +389,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 #Creates Canvases for each Shunt and Range(TH1D)
                 c.append(TCanvas("Shunt %.1f  -  Range %i" % (sh, r), "histo"))
                 c[-1].Divide(2,1)
-
+		c[-1].cd(1)
                 #Create Histograms for the shunt slopes
                 histshunt.append(TH1D("SLOPE_Sh:_%.1f_RANGE_r:_%d" %(sh,r),"SLOPE Sh: %.1f RANGE r: %d" %(sh,r), 100, minimums, maximums))
                 #histshunt[-1].SetTitle("SLOPE SH: %.1f "%(sh))
@@ -421,16 +422,32 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 gPad.SetLogy(1)
                 # Fills the histograms with the values fetched above
                 for val in values:
-                    #slope, offset = val
                     try:
-                        slope,rang, offset, qie, capid, id ,maxr,slSh1 = val
+                        slope, offset = val
                     except:
                         print val
+		    c[-1].cd(1)
                     histshunt[-1].Fill(slope)
-                    histshunt[-1].Draw()
+		    histshunt[-1].Draw()
+		    hline.DrawLine(failureconds[sh][1],0,failureconds[sh][1],histshunt[-1].GetMaximum()+1)
+	            hline.Draw("same")
+		    lline.DrawLine(failureconds[sh][0],0,failureconds[sh][0],histshunt[-1].GetMaximum()+1)
+		    lline.Draw("same")
                     c[-1].cd(2)
                     histoffset[-1].Fill(offset)
                     histoffset[-1].Draw()
+		    if r == 0:
+		        holine.DrawLine(-.49,0,-.49,histoffset[-1].GetMaximum()+1)
+	       	        holine.Draw("same")
+			loline.DrawLine(-.51,0,-.51,histoffset[-1].GetMaximum()+1)
+			loline.Draw("same")
+		    else:
+		        holine.DrawLine(failcondo[r][0],0,failcondo[r][0],histoffset[-1].GetMaximum()+1)
+	       	        holine.Draw("same")
+	                loline.DrawLine(-failcondo[r][0],0,-failcondo[r][0],histoffset[-1].GetMaximum()+1)
+	                loline.Draw("same")
+	            histshunt[-1].Write()
+	            histoffset[-1].Write()
                     if(hist2D):
                         histSlopeNvSlope1[-1].Fill(slSh1,slope)
                     if(shFac):
