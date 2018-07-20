@@ -321,52 +321,52 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
     file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
     json.dump(cardplaceholder, file1)
-        if (adapterTest):
-            rundir = "data/%s/Run_%s/SummaryPlots" % (date, run)
-            outdir = "adapterTests"
-            os.system("mkdir -p %s/%s" % (rundir, outdir))
-            c.append(TCanvas("c","c",1600,1200))
-            ranges = xrange(4)
-            gStyle.SetOptStat(0)
-        if adapterTest:
-            for ra in bins:
-                r=ra[0]
-                for shu in shunts:
-                    sh = shu[0]
-                    if (r == 2 or r == 3) and (sh != 1):
-                        continue
-                    l = TLegend(0.75, 0.75, 0.9, 0.9)
-                    print hslopes
-                    print sh, r
-                    l.AddEntry(hslopes[sh][r]['front'], "Front adapter")
-                    l.AddEntry(hslopes[sh][r]['back'], "Back adapter")
-                    hslopes[sh][r]['front'].SetLineColor(2)
-                    hslopes[sh][r]['front'].SetLineWidth(2)
-                    hslopes[sh][r]['back'].SetLineColor(4)
-                    hslopes[sh][r]['back'].SetLineWidth(2)
+    if (adapterTest):
+        rundir = "data/%s/Run_%s/SummaryPlots" % (date, run)
+        outdir = "adapterTests"
+        os.system("mkdir -p %s/%s" % (rundir, outdir))
+        c.append(TCanvas("c","c",1600,1200))
+        ranges = xrange(4)
+        gStyle.SetOptStat(0)
+    if adapterTest:
+        for ra in bins:
+            r=ra[0]
+            for shu in shunts:
+                sh = shu[0]
+                if (r == 2 or r == 3) and (sh != 1):
+                    continue
+                l = TLegend(0.75, 0.75, 0.9, 0.9)
+                print hslopes
+                print sh, r
+                l.AddEntry(hslopes[sh][r]['front'], "Front adapter")
+                l.AddEntry(hslopes[sh][r]['back'], "Back adapter")
+                hslopes[sh][r]['front'].SetLineColor(2)
+                hslopes[sh][r]['front'].SetLineWidth(2)
+                hslopes[sh][r]['back'].SetLineColor(4)
+                hslopes[sh][r]['back'].SetLineWidth(2)
 
-                    hslopes[sh][r]['back'].SetTitle("Slopes  Shunt %.1f Range %d" % (sh,r))
-                    hslopes[sh][r]['back'].Draw("HIST")
-                    hslopes[sh][r]['front'].Draw("HIST SAME")
-                    l.Draw("SAME")
-                    if(images):
-                        (c[-1].SaveAs)("%s/%s/slopes_shunt_%s_range_%d.png" % (rundir,outdir,str(sh).replace(".","_"),r))
+                hslopes[sh][r]['back'].SetTitle("Slopes  Shunt %.1f Range %d" % (sh,r))
+                hslopes[sh][r]['back'].Draw("HIST")
+                hslopes[sh][r]['front'].Draw("HIST SAME")
+                l.Draw("SAME")
+                if(images):
+                    (c[-1].SaveAs)("%s/%s/slopes_shunt_%s_range_%d.png" % (rundir,outdir,str(sh).replace(".","_"),r))
 
-                    lo = TLegend(0.75, 0.75, 0.9, 0.9)
-                    lo.AddEntry(hslopes[sh][r]['front'], "Front adapter")
-                    lo.AddEntry(hslopes[sh][r]['back'], "Back adapter")
+                lo = TLegend(0.75, 0.75, 0.9, 0.9)
+                lo.AddEntry(hslopes[sh][r]['front'], "Front adapter")
+                lo.AddEntry(hslopes[sh][r]['back'], "Back adapter")
 
-                    hoffsets[sh][r]['front'].SetLineColor(2)
-                    hoffsets[sh][r]['front'].SetLineWidth(2)
-                    hoffsets[sh][r]['back'].SetLineColor(4)
-                    hoffsets[sh][r]['back'].SetLineWidth(2)
+                hoffsets[sh][r]['front'].SetLineColor(2)
+                hoffsets[sh][r]['front'].SetLineWidth(2)
+                hoffsets[sh][r]['back'].SetLineColor(4)
+                hoffsets[sh][r]['back'].SetLineWidth(2)
 
-                    hoffsets[sh][r]['back'].SetTitle("Offsets  Shunt %.1f Range %d" %(sh,r))
-                    hoffsets[sh][r]['back'].Draw("HIST")
-                    hoffsets[sh][r]['front'].Draw("HIST SAME")
-                    lo.Draw("SAME")
-                    if(images):
-                        Quiet(c[-1].SaveAs)("%s/%s/offsets_shunt_%s_range_%d.png" % (rundir,outdir,str(sh).replace(".","_"),r))
+                hoffsets[sh][r]['back'].SetTitle("Offsets  Shunt %.1f Range %d" %(sh,r))
+                hoffsets[sh][r]['back'].Draw("HIST")
+                hoffsets[sh][r]['front'].Draw("HIST SAME")
+                lo.Draw("SAME")
+                if(images):
+                    Quiet(c[-1].SaveAs)("%s/%s/offsets_shunt_%s_range_%d.png" % (rundir,outdir,str(sh).replace(".","_"),r))
     if (total):
         name = nameList[0]
         if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
