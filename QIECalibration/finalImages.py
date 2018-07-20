@@ -14,6 +14,7 @@ def finalImages(dirName=""):
     ranges = [0,1,2,3]
     shunts = [1, 1.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11.5]
 
+    shToGsel = {1:"00",1.5:"01",2:"02",3:"04",4:"08",5:"16",6:"18",7:"20",8:"24",9:"26",10:"28",11:"30",11.5:"31"}
 
     # Get list of fit root files
     fileList = glob.glob(os.path.join(dirName,"fitResults*.root"))
@@ -75,7 +76,7 @@ def finalImages(dirName=""):
                         loline.DrawLine(-failcondo[ra][0],0,-failcondo[ra][0],hist.GetMaximum()+1)
                         loline.Draw("same")
                 # Save canvas as png
-                canv.SaveAs(os.path.join(outDir,"Shunt_%s_%s.png"%(str(sh).replace(".",""),uid)))
+                canv.SaveAs(os.path.join(outDir,"%s_Shunt_%s_%s.png"%(shToGsel[sh],str(sh).replace(".",""),uid)))
             # If not shunt 1, only loop over ranges 0 and 1
             else:
                 canv = r.TCanvas("c1","c1",900,700)
@@ -99,7 +100,7 @@ def finalImages(dirName=""):
                         holine.Draw("same")
                         loline.DrawLine(-failcondo[ra][0],0,-failcondo[ra][0],hist.GetMaximum()+1)
                         loline.Draw("same")
-                canv.SaveAs(os.path.join(outDir,"Shunt_%s_%s.png"%(str(sh).replace(".",""),uid)))
+                canv.SaveAs(os.path.join(outDir,"%s_Shunt_%s_%s.png"%(shToGsel[sh],str(sh).replace(".",""),uid)))
                         
         rootfile.Close()
 if __name__ == '__main__':
