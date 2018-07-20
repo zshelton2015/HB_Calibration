@@ -99,6 +99,7 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
     system("mkdir -p %s" % runDir)
     
     print "%s, Running Mapping Script"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print "       If this takes longer than 5 minutes, the uHTR is likely stuck and needs to be reset"
     # Map links
     histoMap = mapLinks(outF = runDir + "histoMap.txt", configFile = cardLayout, tmpDir = runDir + ".tmpLinkMap")
     sys.stdout = originalSTDOUT
@@ -137,6 +138,7 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
         pointF = "noshunt_hb_fine_scan_test.txt"
         
     print "%s, Starting Calibration Scan"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print "       This will take approximately 20-30 minutes"
 
     qieScan(outDir = runDir, linkMask = linkMask, serialNum = serialNum, uHTR = uHTR, pointF = pointF)
 

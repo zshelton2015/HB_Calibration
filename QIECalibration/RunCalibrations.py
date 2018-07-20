@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import sys
+import subprocess
 
 people = {'Brooks':'Brooks McMaster',
           'Bryan':'Bryan Caraway',
@@ -102,3 +103,4 @@ from saveOnFail import saveOnFail
 saveOnFail(runDir)
 print "%s, Completeted Calibration and Analisys"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+subprocess.check_call("./databaseUpload.sh %s"%runDir,shell=True)

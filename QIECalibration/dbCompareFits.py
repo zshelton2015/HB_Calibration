@@ -33,6 +33,12 @@ parser.add_argument("-x", "--dir1", help="first input directory" )
 parser.add_argument("-y", "--dir2", help="second input directory" )
 parser.add_argument("-o", "--dir", dest="outDir", default="compareFits", help="output directory" )
 
+qieLocation = {1:"back", 2:"back", 3:"back", 4:"back", 
+               5:"front", 6:"front", 7:"front", 8:"front",
+               9:"back", 10:"back", 11:"back", 12:"back",
+               13:"front", 14:"front", 15:"front", 16:"front"}
+
+
 args = parser.parse_args()
 
 if args.dir1[-1] == "/":
@@ -229,6 +235,10 @@ h2D_slope1_vs_qie_all = {}
 h2D_slope2_vs_qie_all = {}
 
 
+shunt_factor_1 = {}
+shunt_factor_2 = {}
+
+
 # Deteremine min/max for slopes,offsets
 for uid in uidList: 
     maxslope[uid] = {}
@@ -316,6 +326,25 @@ for uid in uidList:
     h2D_slope1_vs_qie[uid] = {}
     h2D_slope2_vs_qie[uid] = {}
 
+    shunt_factor_1[uid] = {}
+    shunt_factor_2[uid] = {}
+    shunt_factor_1[uid]["front"] = {}
+    shunt_factor_2[uid]["front"] = {}
+    shunt_factor_1[uid]["back"] = {}
+    shunt_factor_2[uid]["back"] = {}
+    shunt_factor_1[uid]["total"] = {}
+    shunt_factor_2[uid]["total"] = {}
+    shunt_factor_1["all"] = {}
+    shunt_factor_2["all"] = {}
+    shunt_factor_1["all"]["front"] = {}
+    shunt_factor_2["all"]["front"] = {}
+    shunt_factor_1["all"]["back"] = {}
+    shunt_factor_2["all"]["back"] = {}
+    shunt_factor_1["all"]["total"] = {}
+    shunt_factor_2["all"]["total"] = {}
+
+
+
     res_slopes[uid] = {}
     res_offsets[uid] = {}
 
@@ -326,6 +355,20 @@ for uid in uidList:
         h2D_slope1_vs_qie[uid][sh] = {}
         h2D_slope2_vs_qie[uid][sh] = {}
     
+        shunt_factor_1[uid]["front"][sh] = {}
+        shunt_factor_1[uid]["back"][sh] = {}
+        shunt_factor_1[uid]["total"][sh] = {}
+        shunt_factor_2[uid]["front"][sh] = {}
+        shunt_factor_2[uid]["back"][sh] = {}
+        shunt_factor_2[uid]["total"][sh] = {}
+        shunt_factor_1["all"]["front"][sh] = {}
+        shunt_factor_1["all"]["back"][sh] = {}
+        shunt_factor_1["all"]["total"][sh] = {}
+        shunt_factor_2["all"]["front"][sh] = {}
+        shunt_factor_2["all"]["back"][sh] = {}
+        shunt_factor_2["all"]["total"][sh] = {}
+
+
         res_slopes[uid][sh] = {}
         res_offsets[uid][sh] = {}
 
@@ -344,7 +387,9 @@ for uid in uidList:
             h2D_offsets[uid][sh][r] = {}
             h2D_slope1_vs_qie[uid][sh][r] = {}
             h2D_slope2_vs_qie[uid][sh][r] = {}
-            
+           
+
+
             res_slopes[uid][sh][r] = {}
             res_offsets[uid][sh][r] = {}
 
@@ -393,6 +438,69 @@ for uid in uidList:
             h2D_slope2_vs_qie[uid][sh][r].GetXaxis().SetTitle("QIE Channel")
             h2D_slope2_vs_qie[uid][sh][r].GetYaxis().SetTitle("Run %d Slopes" % runNum2)
             
+            shunt_factor_1[uid]["total"][sh][r] = TH1D("%s_shunt_factor_1_shunt_%s_range_%d" % (uid, shstr, r), "Run %d  %s  Shunt Factor  Shunt %.1f Range %d" % (runNum1,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_1[uid]["front"][sh][r] = TH1D("%s_shunt_factor_1_front_shunt_%s_range_%d" % (uid, shstr, r), "Run %d  %s  Shunt Factor  Front QIEs  Shunt %.1f Range %d" % (runNum1,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_1[uid]["back"][sh][r] = TH1D("%s_shunt_factor_1_back_shunt_%s_range_%d" % (uid, shstr, r), "Run %d  %s  Shunt Factor  Back QIEs  Shunt %.1f Range %d" % (runNum1,uid,sh,r), 100, sh*0.9, sh*1.05)
+            
+            shunt_factor_2[uid]["total"][sh][r] = TH1D("%s_shunt_factor_2_shunt_%s_range_%d" % (uid, shstr, r), "Run %d  %s  Shunt Factor  Shunt %.1f Range %d" % (runNum2,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_2[uid]["front"][sh][r] = TH1D("%s_shunt_factor_2_front_shunt_%s_range_%d" % (uid, shstr, r), "Run %d  %s  Shunt Factor  Front QIEs  Shunt %.1f Range %d" % (runNum2,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_2[uid]["back"][sh][r] = TH1D("%s_shunt_factor_2_back_shunt_%s_range_%d" % (uid, shstr, r), "Run %d  %s  Shunt Factor  Back QIEs  Shunt %.1f Range %d" % (runNum2,uid,sh,r), 100, sh*0.9, sh*1.05)
+            
+            shunt_factor_1["all"]["total"][sh][r] = TH1D("shunt_factor_1_shunt_%s_range_%d" % (shstr, r), "Run %d  %s  Shunt Factor  Shunt %.1f Range %d" % (runNum1,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_1["all"]["front"][sh][r] = TH1D("shunt_factor_1_front_shunt_%s_range_%d" % (shstr, r), "Run %d  %s  Shunt Factor  Front QIEs  Shunt %.1f Range %d" % (runNum1,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_1["all"]["back"][sh][r] = TH1D("shunt_factor_1_back_shunt_%s_range_%d" % (shstr, r), "Run %d  %s  Shunt Factor  Back QIEs  Shunt %.1f Range %d" % (runNum1,uid,sh,r), 100, sh*0.9, sh*1.05)
+            
+            shunt_factor_2["all"]["total"][sh][r] = TH1D("shunt_factor_2_shunt_%s_range_%d" % (shstr, r), "Run %d  %s  Shunt Factor  Shunt %.1f Range %d" % (runNum2,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_2["all"]["front"][sh][r] = TH1D("shunt_factor_2_front_shunt_%s_range_%d" % (shstr, r), "Run %d  %s  Shunt Factor  Front QIEs  Shunt %.1f Range %d" % (runNum2,uid,sh,r), 100, sh*0.9, sh*1.05)
+            shunt_factor_2["all"]["back"][sh][r] = TH1D("shunt_factor_2_back_shunt_%s_range_%d" % (shstr, r), "Run %d  %s  Shunt Factor  Back QIEs  Shunt %.1f Range %d" % (runNum2,uid,sh,r), 100, sh*0.9, sh*1.05)
+            
+
+            shunt_factor_1[uid]["total"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_1[uid]["total"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_1[uid]["front"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_1[uid]["front"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_1[uid]["front"][sh][r].SetLineColor(kRed)
+            shunt_factor_1[uid]["front"][sh][r].SetLineWidth(2.0)
+            shunt_factor_1[uid]["back"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_1[uid]["back"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_1[uid]["back"][sh][r].SetLineColor(kBlue)
+            shunt_factor_1[uid]["back"][sh][r].SetLineWidth(2.0)
+
+            shunt_factor_2[uid]["total"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_2[uid]["total"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_2[uid]["front"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_2[uid]["front"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_2[uid]["front"][sh][r].SetLineColor(kRed)
+            shunt_factor_2[uid]["front"][sh][r].SetLineWidth(2.0)
+            shunt_factor_2[uid]["back"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_2[uid]["back"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_2[uid]["back"][sh][r].SetLineColor(kBlue)
+            shunt_factor_2[uid]["back"][sh][r].SetLineWidth(2.0)
+            
+            
+            shunt_factor_1["all"]["total"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_1["all"]["total"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_1["all"]["front"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_1["all"]["front"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_1["all"]["front"][sh][r].SetLineColor(kRed)
+            shunt_factor_1["all"]["front"][sh][r].SetLineWidth(2.0)
+            shunt_factor_1["all"]["back"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_1["all"]["back"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_1["all"]["back"][sh][r].SetLineColor(kBlue)
+            shunt_factor_1["all"]["back"][sh][r].SetLineWidth(2.0)
+
+            shunt_factor_2["all"]["total"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_2["all"]["total"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_2["all"]["front"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_2["all"]["front"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_2["all"]["front"][sh][r].SetLineColor(kRed)
+            shunt_factor_2["all"]["front"][sh][r].SetLineWidth(2.0)
+            shunt_factor_2["all"]["back"][sh][r].GetXaxis().SetTitle("Shunt Factor")
+            shunt_factor_2["all"]["back"][sh][r].GetYaxis().SetTitle("QIE Channels")
+            shunt_factor_2["all"]["back"][sh][r].SetLineColor(kBlue)
+            shunt_factor_2["all"]["back"][sh][r].SetLineWidth(2.0)
+            
+
 
             h2D_slopes[uid][sh][r]["total"] = TH2D("%s_slopes_shunt_%s_range_%d" % (uid,shstr,r), "%s  Slopes  Shunt %.1f Range %d" % (uid,sh,r), 100, minslope[uid][sh][r], maxslope[uid][sh][r], 100, minslope[uid][sh][r], maxslope[uid][sh][r]) 
             h2D_offsets[uid][sh][r]["total"] = TH2D("%s_offsets_shunt_%s_range_%d" % (uid,shstr,r), "%s   Offsets  Shunt %.1f Range %d" % (uid,sh,r), 100, minoffset[uid][sh][r], maxoffset[uid][sh][r], 100, minoffset[uid][sh][r], maxoffset[uid][sh][r]) 
@@ -454,6 +562,24 @@ for uid in uidList:
                     res_offsets[uid][sh][r].Fill((offsets1[uid][sh][r][qie][capID] - offsets2[uid][sh][r][qie][capID]) / 8**r)
                     #res_offsets[uid][sh][r].Fill((offsets1[uid][sh][r][qie][capID] - offsets2[uid][sh][r][qie][capID])/offsets1[uid][sh][r][qie][capID])
 
+for uid in uidList:
+    for sh in foundShunts:
+        if sh < 1.3: continue
+        for r in xrange(4):
+            if sh > 1 and r > 1: continue
+            for qie in xrange(1,17):
+                for capID in xrange(4):
+                    shunt_factor_1[uid]["total"][sh][r].Fill(slopes1[uid][1.0][r][qie][capID] / slopes1[uid][sh][r][qie][capID])
+                    shunt_factor_1[uid][qieLocation[qie]][sh][r].Fill(slopes1[uid][1.0][r][qie][capID] / slopes1[uid][sh][r][qie][capID])
+                    shunt_factor_1["all"]["total"][sh][r].Fill(slopes1[uid][1.0][r][qie][capID] / slopes1[uid][sh][r][qie][capID])
+                    shunt_factor_1["all"][qieLocation[qie]][sh][r].Fill(slopes1[uid][1.0][r][qie][capID] / slopes1[uid][sh][r][qie][capID])
+                    
+                    shunt_factor_2[uid]["total"][sh][r].Fill(slopes2[uid][1.0][r][qie][capID] / slopes2[uid][sh][r][qie][capID])
+                    shunt_factor_2[uid][qieLocation[qie]][sh][r].Fill(slopes2[uid][1.0][r][qie][capID] / slopes2[uid][sh][r][qie][capID])
+                    shunt_factor_2["all"]["total"][sh][r].Fill(slopes2[uid][1.0][r][qie][capID] / slopes2[uid][sh][r][qie][capID])
+                    shunt_factor_2["all"][qieLocation[qie]][sh][r].Fill(slopes2[uid][1.0][r][qie][capID] / slopes2[uid][sh][r][qie][capID])
+               
+
 """
 with open("%s/debug.p"%args.outDir, "wb") as f:
     pickle.dump(h2D_slopes_all, f)
@@ -465,6 +591,70 @@ with open("%s/debug.p"%args.outDir, "wb") as f:
     pickle.dump(offsets1, f)
     pickle.dump(offsets2, f)
 """
+
+grSF1_front = {"all":{} }
+grSF1_back = {"all":{} }
+
+
+for r in xrange(2):
+    grSF1_front["all"][r] = TGraphErrors(len(foundShunts) - 1)
+    grSF1_back["all"][r] = TGraphErrors(len(foundShunts) - 1)
+
+    grSF1_front["all"][r].SetName("shunt_factors_front_range_%d" % r)
+    grSF1_front["all"][r].SetTitle("Shunt Factors  Range %d  Front QIEs" % r)
+    grSF1_front["all"][r].GetXaxis().SetTitle("Reference Shunt Factor")
+    grSF1_front["all"][r].GetYaxis().SetTitle("Measured Shunt Factor")
+    grSF1_back["all"][r].SetName("shunt_factors_back_range_%d" % r)
+    grSF1_back["all"][r].SetTitle("Shunt Factors  Range %d  Back QIEs" % r)
+    grSF1_back["all"][r].GetXaxis().SetTitle("Reference Shunt Factor")
+    grSF1_back["all"][r].GetYaxis().SetTitle("Measured Shunt Factor")
+
+    grSF1_front["all"][r].SetLineColor(kRed)
+    grSF1_front["all"][r].SetMarkerColor(kRed)
+    grSF1_back["all"][r].SetLineColor(kBlue)
+    grSF1_back["all"][r].SetMarkerColor(kBlue)
+
+for uid in uidList:
+    grSF1_front[uid] = {}
+    grSF1_back[uid] = {}
+    for r in xrange(2):
+        grSF1_front[uid][r] = TGraphErrors(len(foundShunts) - 1)
+        grSF1_back[uid][r] = TGraphErrors(len(foundShunts) - 1)
+
+        grSF1_front[uid][r].SetName("%s_shunt_factors_front_range_%d" % (uid,r))
+        grSF1_front[uid][r].SetTitle("%s  Shunt Factors  Range %d  Front QIEs" % (uid,r))
+        grSF1_back[uid][r].SetName("%s_shunt_factors_back_range_%d" % (uid,r))
+        grSF1_back[uid][r].SetTitle("%s  Shunt Factors  Range %d  Back QIEs" % (uid,r))
+        grSF1_front[uid][r].GetXaxis().SetTitle("Reference Shunt Factor")
+        grSF1_front[uid][r].GetYaxis().SetTitle("Measured Shunt Factor")
+        grSF1_back[uid][r].GetXaxis().SetTitle("Reference Shunt Factor")
+        grSF1_back[uid][r].GetYaxis().SetTitle("Measured Shunt Factor")
+
+        grSF1_front[uid][r].SetLineColor(kRed)
+        grSF1_front[uid][r].SetMarkerColor(kRed)
+        grSF1_back[uid][r].SetLineColor(kBlue)
+        grSF1_back[uid][r].SetMarkerColor(kBlue)
+        
+
+for r in xrange(2):
+    for sh in foundShunts:
+        if sh < 1.3: continue
+        np = grSF1_front["all"][r].GetN()
+        grSF1_front["all"][r].SetPoint(np, sh, shunt_factor_1["all"]["front"][sh][r].GetMean())
+        grSF1_front["all"][r].SetPointError(np, 0.01, shunt_factor_1["all"]["front"][sh][r].GetRMS())
+        grSF1_back["all"][r].SetPoint(np, sh, shunt_factor_1["all"]["back"][sh][r].GetMean())
+        grSF1_back["all"][r].SetPointError(np, 0.01, shunt_factor_1["all"]["back"][sh][r].GetRMS())
+
+for uid in uidList:
+    for sh in foundShunts:
+        if sh < 1.3: continue
+        for r in xrange(2):
+            np = grSF1_front[uid][r].GetN()
+            grSF1_front[uid][r].SetPoint(np, sh, shunt_factor_1[uid]["front"][sh][r].GetMean())
+            grSF1_front[uid][r].SetPointError(np, 0.01, shunt_factor_1[uid]["front"][sh][r].GetRMS())
+            grSF1_back[uid][r].SetPoint(np, sh, shunt_factor_1[uid]["back"][sh][r].GetMean())
+            grSF1_back[uid][r].SetPointError(np, 0.01, shunt_factor_1[uid]["back"][sh][r].GetRMS())
+
 
 gROOT.SetBatch(True)
 outF = TFile.Open("%s/%s.root" % (args.outDir, os.path.basename(args.outDir)), "recreate")
@@ -503,6 +693,19 @@ for sh in foundShunts:
         h2D_slope2_vs_qie_all[sh][r].Write()
         res_slopes_all[sh][r].Write()
         res_offsets_all[sh][r].Write()
+        
+        shunt_factor_1["all"]["total"][sh][r].Write()
+        shunt_factor_1["all"]["front"][sh][r].Write()
+        shunt_factor_1["all"]["back"][sh][r].Write()
+        
+        shunt_factor_2["all"]["total"][sh][r].Write()
+        shunt_factor_2["all"]["front"][sh][r].Write()
+        shunt_factor_2["all"]["back"][sh][r].Write()
+
+
+for r in xrange(2):
+    grSF1_front["all"][r].Write()
+    grSF1_back["all"][r].Write()
 
 for uid in uidList:
     d = outF.mkdir(uid)
@@ -513,6 +716,11 @@ for uid in uidList:
     #d.mkdir("Run_%d_slope_vs_qie" % runNum1)
     #d.mkdir("Run_%d_slope_vs_qie" % runNum2)
 
+for uid in uidList:
+    for r in xrange(2):
+        outF.cd(uid)
+        grSF1_front[uid][r].Write()
+        grSF1_back[uid][r].Write()
 
 for uid in uidList:
     for sh in foundShunts:
@@ -527,11 +735,85 @@ for uid in uidList:
             h2D_slope2_vs_qie[uid][sh][r].Write()
             res_slopes[uid][sh][r].Write()
             res_offsets[uid][sh][r].Write()
+            
+            shunt_factor_1[uid]["total"][sh][r].Write()
+            shunt_factor_1[uid]["front"][sh][r].Write()
+            shunt_factor_1[uid]["back"][sh][r].Write()
+            
+            shunt_factor_2[uid]["total"][sh][r].Write()
+            shunt_factor_2[uid]["front"][sh][r].Write()
+            shunt_factor_2[uid]["back"][sh][r].Write()
+            
             for qie in xrange(1,17):
                 outF.cd()
                 outF.cd("%s/QIE_%d" % (uid,qie))
                 h2D_slopes[uid][sh][r][qie].Write()
                 h2D_offsets[uid][sh][r][qie].Write()
-            
+
 outF.Close()
+
+sfDir = "%s/ShuntFactors1" % args.outDir
+
+c = TCanvas("c","c",1000,800)
+gStyle.SetOptStat(0)
+print "Saving shunt factor plots"
+
+for uid in uidList:
+    os.system("mkdir -p %s/%s" % (sfDir,uid))
+    for sh in foundShunts:
+        if sh < 1.3: continue
+        for r in xrange(4):
+            if sh > 1 and r > 1: continue
+            l = TLegend(0.75, 0.75, 0.9, 0.9)
+            l.AddEntry(shunt_factor_1["all"]["front"][sh][r], "Front QIEs")
+            l.AddEntry(shunt_factor_1["all"]["back"][sh][r], "Back QIEs")
+
+            shunt_factor_1["all"]["front"][sh][r].SetTitle("Shunt Factors  Shunt %.1f Range %d" % (sh,r))
+            shunt_factor_1["all"]["front"][sh][r].Draw("HIST")
+            shunt_factor_1["all"]["back"][sh][r].Draw("HIST SAME")
+            l.Draw("SAME")
+            c.SaveAs("%s/shuntfactors_shunt_%s_range_%d.png" % (sfDir, str(sh).replace(".","_"),r))
+
+            
+            l = TLegend(0.75, 0.75, 0.9, 0.9)
+            l.AddEntry(shunt_factor_1[uid]["front"][sh][r], "Front QIEs")
+            l.AddEntry(shunt_factor_1[uid]["back"][sh][r], "Back QIEs")
+
+            shunt_factor_1[uid]["front"][sh][r].SetTitle("%s  Shunt Factors  Shunt %.1f Range %d" % (uid,sh,r))
+            shunt_factor_1[uid]["front"][sh][r].Draw("HIST")
+            shunt_factor_1[uid]["back"][sh][r].Draw("HIST SAME")
+            l.Draw("SAME")
+            c.SaveAs("%s/%s/%s_shuntfactors_shunt_%s_range_%d.png" % (sfDir, uid, uid, str(sh).replace(".","_"),r))
+
+
+
+for r in xrange(2):
+    l = TLegend(0.75, 0.25, 0.9, 0.4)
+    l.AddEntry(grSF1_front["all"][r], "Front QIEs")
+    l.AddEntry(grSF1_back["all"][r], "Back QIEs")
+
+    grSF1_front["all"][r].SetTitle("Shunt Factors  Range %d" % r)
+    grSF1_front["all"][r].GetXaxis().SetTitle("Reference Shunt Factor")
+    grSF1_front["all"][r].GetYaxis().SetTitle("Measured Shunt Factor")
+    grSF1_front["all"][r].Draw("ALP")
+    grSF1_back["all"][r].Draw("LP SAME")
+    l.Draw("SAME")
+    c.SaveAs("%s/shuntfactors_range_%d.png" % (sfDir,r))
+
+    for uid in uidList:
+        l = TLegend(0.75, 0.25, 0.9, 0.4)
+        l.AddEntry(grSF1_front[uid][r], "Front QIEs")
+        l.AddEntry(grSF1_back[uid][r], "Back QIEs")
+
+        grSF1_front[uid][r].SetTitle("%s  Shunt Factors  Range %d" % (uid,r))
+        grSF1_front[uid][r].GetXaxis().SetTitle("Reference Shunt Factor")
+        grSF1_front[uid][r].GetYaxis().SetTitle("Measured Shunt Factor")
+        grSF1_front[uid][r].Draw("ALP")
+        grSF1_back[uid][r].Draw("LP SAME")
+        l.Draw("SAME")
+        c.SaveAs("%s/%s/shuntfactors_range_%d.png" % (sfDir,uid,r))
+
+
+
+
 print "Done!\n"

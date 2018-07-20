@@ -26,8 +26,8 @@ class _Getch:
 
 
 def main():
-    dacSettings = range(0, 100, 25) + range(100, 1000, 100) + range(1000, 43000, 3000)
-    #dacSettings = [1000, 10000]
+    #dacSettings = range(0, 100, 25) + range(100, 1000, 100) + range(1000, 43000, 3000)
+    dacSettings = [50, 1000, 10000]
     
     kam = Keithley(timeDelay=3, numReadings=15)
     results = {}
@@ -41,10 +41,10 @@ def main():
     getch = _Getch()
     instructions = "(Press (q) to quit, (r) to redo last reading, any other key to continue)"
     
-    #chan = 1 
-    #while chan < 17:
-    chan = 6
-    while chan < 7:
+    chan = 1 
+    while chan < 17:
+    #chan = 6
+    #while chan < 7:
         print "Set channel %d.. " % chan, instructions
         x = getch()
         if x == 'q':
@@ -81,9 +81,9 @@ def main():
 
         print ""
     
-    #if chan < 17:
+    if chan < 17:
         # Exited early. Don't save results
-    #    return
+        return
 
 
     parentDir = "InjectorCalibration_highCurrent"
