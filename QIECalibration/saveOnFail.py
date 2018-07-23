@@ -11,6 +11,7 @@ from pprint import pprint
 from collections import Counter
 
 gROOT.SetBatch(True)
+gROOT.SetStyle("Plain")
 
 try:
     Quiet(TObject())
