@@ -69,8 +69,8 @@ def finalImages(dirName=""):
                         lline.Draw("same")
                     #Draw Offset Histogram with boundary lines, excluding the drawing if the histogram doesn't exist
                     canv.cd(ra+1+4)
-                    if sumDir.GetListOfKeys().Contains("OFFSET_Sh_%s-R_%d"%(str(sh).replace(".",""),ra)):
-                        hist = sumDir.Get("OFFSET_Sh_%s-R_%d"%(str(sh).replace(".",""),ra))
+                    if sumDir.GetListOfKeys().Contains("OFFSET_Sh_%s_R_%d"%(str(sh).replace(".",""),ra)):
+                        hist = sumDir.Get("OFFSET_Sh_%s_R_%d"%(str(sh).replace(".",""),ra))
                         hist.Draw()
                         holine.DrawLine(failcondo[ra][0],0,failcondo[ra][0],hist.GetMaximum()+1)
                         holine.Draw("same")
