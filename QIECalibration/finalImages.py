@@ -6,6 +6,7 @@ import os
 from shutil import copyfile
 
 r.gROOT.SetBatch(True)
+r.gROOT.SetStyle("Plain")
 
 import json
 
