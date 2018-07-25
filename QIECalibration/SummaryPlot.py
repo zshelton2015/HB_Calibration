@@ -15,7 +15,6 @@ from MergeDatabases import MergeDatabases
 from selectionCuts import *
 from utils import Quiet
 
-
 people = {'Brooks':'Brooks McMaster',
           'Bryan':'Bryan Caraway',
           'Caleb':'Caleb Smith',
@@ -34,7 +33,8 @@ people = {'Brooks':'Brooks McMaster',
           'Eckert':'Zach Eckert',
           'ZachS':'Zach Shelton',
           'Shelton':'Zach Shelton',
-          }
+            }
+
 
 backAdapter = [1,2,3,4,9,10,11,12]
 
@@ -46,9 +46,9 @@ badShunts =[]
 
 badOffset =[]
 
-plotBoundaries_slope = [0.28, 0.36]
+plotBoundaries_slope = [0.27, 0.36]
 
-plotBoundaries_offset = [1, 16, 100, 800]
+plotBoundaries_offset = [1, 16, 100, 900]
 
 #FINDING ERROR PERCENTAGE
 thshunt= .30
@@ -59,12 +59,20 @@ from ROOT import *
 #def SummaryPlot(options):
 def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, run1=None, hist2D=False, shFac=False, adapterTest=False,images=False, verbose=False, slVqie=False, tester1 = "Shelton",logoutput=False):
     # Get required arguments from options
+    tester = tester1
     run = run1[0]
     date = date1[0]
-    if type(tester1) == type([]):
-        tester = tester1[0]
-    elif type(tester1) == type(""):
-        tester = tester1
+    if type(tester) == type([]):
+        tester = tester[0]
+        if tester in people:
+            tester = people[tester]
+    elif type(tester) == type(""):
+        if tester1 in people:
+            tester = people[tester1]
+#        elif tester1 in people.values():
+#            tester = tester1
+        else:
+            print "Tester not in list of testers"
     else:
         print "Tester type error"
 
@@ -199,9 +207,9 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         histShuntFactor[-1].GetXaxis().SetTitle("Shunt Factor")
                         histShuntFactor[-1].GetYaxis().SetTitle("Frequency")
 
-                #Create Histograms for the Offsets       
+                #Create Histograms for the Offsets
                     maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
-                    maximumo,minimumo = maxmin[0]
+                    maximum,minimum = maxmin[0]
                     maximumo  = max(plotBoundaries_offset[r], maximum)
                     minimumo  = min(-1*plotBoundaries_offset[r], minimum)
                     test = []
@@ -323,13 +331,13 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 offset1 = cursor.execute("Select avg(offset) from qieshuntparams where shunt =%.1f and  id ='%s' and  range = %d"%(s,name,r)).fetchall()
                 offset = offset1[0]
                 if offset[0] < rangemean[r][0] or offset[0] > rangemean[r][1]:
-                    OffsetMean.append((s,r,20,20))
+                    OffsetMean.append((s,r))
                     Result = False
-                    print (s,r,offset,20,20)
-                    print "20,20 for qie and capid is indicative of a failure in the mean of the Offset"
+                    if(verbose):
+                        print "qie and capid is indicative of a failure in the mean of the Offset"
         rootout.Close()
         FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit,'Bad Mean Offset':OffsetMean}})
-        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
+        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':tester, 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits,'Bad Mean Offset':OffsetMean}}
         file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
         json.dump(cardplaceholder, file1)
     if (adapterTest):
@@ -518,14 +526,15 @@ def offsetFail(r,offset,name):
     from selectionCuts import *
     failure= False
     if r==0:
-        if (offset > -.45 or offset < -.55)
+        if (offset > -.45 or offset < -.55):
             failure = True
-    elif (offset > failcondo[r] or offset < -(failcondo[r])):
+    elif (offset > failcondo[r][0] or offset < -1*(failcondo[r][0])):
         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
         failure=True
     return failure
-def poorfit(maxr, r):
+def poorfit(maxra, r):
     from selectionCuts import *
+    maxr = abs(maxra)
     failure = False
     if (maxr > maxResiduals[r]):
         failure=True
