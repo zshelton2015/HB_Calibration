@@ -68,12 +68,29 @@ def findXRange(inputDir):
     minRange = {0:r0min,1:r1min,2:r2min,3:r3min}
     maxRange = {0:r0max,1:r1max,2:r2max,3:r3max}
 
+    minHists = []
+    maxHists = []
+    c = []
+    cmax = []
     for r in ranges:
-        h1 = Hist(100,np.amin(minRange[r])-0.1*minRange[r].mean(),np.amax(minRange[r])
-    h1 = Hist(100,np.amin(r0min)-0.1*r0min.mean(),np.amax(r0min)+0.1*r0min.mean(),title="Test Histogram")
-    h1.fill_array(r0min)
-    h1.Draw("hist")
+        c.append(TCanvas())
+        minHists.append(Hist(100,np.amin(minRange[r])-0.1*minRange[r].mean(),np.amax(minRange[r])+0.1*minRange[r].mean(),title="Minimum X Value Range %d"%r))
+        minHists[-1].fill_array(minRange[r])
+        minHists[-1].Draw("hist")
+        c[-1].Draw()
+        c[-1].SaveAs("%s.png"%minHists[-1].GetTitle())
+        cmax.append(TCanvas())
+        maxHists.append(Hist(100,np.amax(maxRange[r])-0.1*maxRange[r].mean(),np.amax(maxRange[r])+0.1*maxRange[r].mean(),title="Maximum X Value Range %d"%r))
+        maxHists[-1].fill_array(maxRange[r])
+        maxHists[-1].Draw("hist")
+        cmax[-1].Draw()
+        cmax[-1].SaveAs("%s.png"%maxHists[-1].GetTitle())
     wait(True)
+
+#    h1 = Hist(100,np.amin(r0min)-0.1*r0min.mean(),np.amax(r0min)+0.1*r0min.mean(),title="Test Histogram")
+#    h1.fill_array(r0min)
+#    h1.Draw("hist")
+#    wait(True)
 
 if __name__ == '__main__':
     findXRange(sys.argv[1])
