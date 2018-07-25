@@ -46,7 +46,7 @@ badShunts =[]
 
 badOffset =[]
 
-plotBoundaries_slope = [0.28, 0.36]
+plotBoundaries_slope = [0.27, 0.36]
 
 plotBoundaries_offset = [1, 16, 100, 800]
 
@@ -199,7 +199,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         histShuntFactor[-1].GetXaxis().SetTitle("Shunt Factor")
                         histShuntFactor[-1].GetYaxis().SetTitle("Frequency")
 
-                #Create Histograms for the Offsets       
+                #Create Histograms for the Offsets
                     maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
                     maximumo,minimumo = maxmin[0]
                     maximumo  = max(plotBoundaries_offset[r], maximum)
@@ -323,13 +323,13 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 offset1 = cursor.execute("Select avg(offset) from qieshuntparams where shunt =%.1f and  id ='%s' and  range = %d"%(s,name,r)).fetchall()
                 offset = offset1[0]
                 if offset[0] < rangemean[r][0] or offset[0] > rangemean[r][1]:
-                    OffsetMean.append((s,r,20,20))
+                    OffsetMean.append((s,r))
                     Result = False
-                    print (s,r,offset,20,20)
-                    print "20,20 for qie and capid is indicative of a failure in the mean of the Offset"
+                        if(verbose):
+                            print "qie and capid is indicative of a failure in the mean of the Offset"
         rootout.Close()
         FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit,'Bad Mean Offset':OffsetMean}})
-        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
+        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits,'Bad Mean Offset':OffseMean}}
         file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
         json.dump(cardplaceholder, file1)
     if (adapterTest):
@@ -518,7 +518,7 @@ def offsetFail(r,offset,name):
     from selectionCuts import *
     failure= False
     if r==0:
-        if (offset > -.45 or offset < -.55)
+        if (offset > -.45 or offset < -.55):
             failure = True
     elif (offset > failcondo[r] or offset < -(failcondo[r])):
         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
