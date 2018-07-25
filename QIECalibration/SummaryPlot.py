@@ -199,8 +199,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         histShuntFactor[-1].GetXaxis().SetTitle("Shunt Factor")
                         histShuntFactor[-1].GetYaxis().SetTitle("Frequency")
 
-                #Create Histograms for the Offsets
-
+                #Create Histograms for the Offsets       
                     maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
                     maximumo,minimumo = maxmin[0]
                     maximumo  = max(plotBoundaries_offset[r], maximum)
@@ -306,7 +305,6 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     histoffset[-1].Write()
                     c[-1].Update()
                     if(images):
-
                         Quiet(c[-1].SaveAs)("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(date, run, name,name, str(sh).replace(".",""), r))
                     if(hist2D):
                         histSlopeNvSlope1[-1].Write()
@@ -505,6 +503,9 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         if logoutput:
             sys.stdout = originalSTDOUT
 
+#   sys.stderr = originalSTDERR
+
+
 # THIS PASS FAIL USES HARDCODED SLOPE VALUES TO DETERMINE ERRORS
 def slopeFailH(sh, r, name,slope,thshunt = .3,pct = .1):
     from selectionCuts import *
@@ -518,6 +519,7 @@ def offsetFail(r,offset,name):
     failure= False
     if r==0:
         if (offset > -.45 or offset < -.55)
+            failure = True
     elif (offset > failcondo[r] or offset < -(failcondo[r])):
         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
         failure=True

@@ -11,6 +11,7 @@ from pprint import pprint
 from collections import Counter
 
 gROOT.SetBatch(True)
+gROOT.SetStyle("Plain")
 
 try:
     Quiet(TObject())
@@ -40,23 +41,23 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     if saveName[-1]!='/':
         saveName += '/'
     saveName += "plots"
-    
+
     if qieBarcode != "":
         qieInfo += ", Barcode " + qieBarcode
-    
+
     if qieUniqueID != "": 
         qieInfo += "  UID "+qieUniqueID
     else:
         qieUniqueID = "UnknownID"
-    
+
     #saveName += qieUniqueID
     if not os.path.exists(saveName):
         os.system("mkdir -p %s"%saveName)
     saveName += "/LinADCvsfC"
-    if qieNumber != 0: 
+    if qieNumber != 0:
         qieInfo += ", QIE " + str(qieNumber)
         saveName += "_qie"+str(qieNumber)
-    
+
     qieInfo += ", CapID " + str(i_capID)
     saveName += "_range"+str(i_range)
     saveName += "_capID"+str(i_capID)
@@ -80,28 +81,28 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     N = graph.GetN()
     x = []
     y = []
-    
+
     for i in range(N):
-        residuals.append((yVals[i]-fitLine.Eval(xVals[i]))/max(yVals[i],0.001))
+        residuals.append((yVals[i]-fitLine.Eval(xVals[i])))
         xLow = (xVals[i]-exVals[i])
         xHigh = (xVals[i]+exVals[i])
-        residualErrors.append((eyVals[i]/max(yVals[i],0.001)))
+        residualErrors.append((eyVals[i]))
         x.append(xVals[i])
-    
-    
+
+
     resArray = array('d',residuals)
     resErrArray = array('d',residualErrors)
     resErrUpArray = array('d',eUp)
     resErrDownArray = array('d',eDown)
     xArray = array('d',x)
     xErrorsArray = array('d',[0]*len(x))
-    
+
     if verbose and i_range == 1:
         print  "the length of residuals are:",len(resArray)
         print "the charge length :",len(x)
-    
+
     residualGraphX = TGraphErrors(len(x),xArray,resArray, xErrorsArray, resErrArray)
-    
+
     residualGraphX.SetTitle("")
     c1 = TCanvas()
     p1 = TPad("","",0,0.2,0.9,1)
@@ -119,7 +120,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     fitLine.SetLineColor(kRed)
     fitLine.SetLineWidth(1)
     fitLine.Draw("same")
-    
+
     xmin = graph.GetXaxis().GetXmin()
     xmax = graph.GetXaxis().GetXmax()
     ymin = graph.GetYaxis().GetXmin()
@@ -128,12 +129,13 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     text.SetFillColor(kWhite)
     text.SetTextSize(0.75*text.GetTextSize())
     text.SetFillStyle(8000)
+    ######### Add in Cut Values #############
     text.AddText("Slope =  %.4f +- %.4f LinADC/fC" % (fitLine.GetParameter(1), fitLine.GetParError(1)))
     text.AddText("Offset =  %.2f +- %.2f LinADC" % (fitLine.GetParameter(0), fitLine.GetParError(0)))
     text.AddText("Chisquare = %e " % (fitLine.GetChisquare()))
     text.Draw("same")
-    
-    
+
+
     p2.cd()
     p2.SetTopMargin(0)
     p2.SetRightMargin(0)
@@ -143,20 +145,20 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     zeroLine.SetLineColor(kBlack)
     zeroLine.SetLineWidth(1)
     zeroLine.Draw("same")
-    
+
     # xmin = xmin-10
     # xmax = xmax+10
     #if minCharge < 10: minCharge = -10
-    
+
     graph.GetXaxis().SetRangeUser(xmin*0.9, xmax*1.1)
     graph.GetYaxis().SetRangeUser(ymin*.9,ymax*1.1)
-    
+
     residualGraphX.GetXaxis().SetRangeUser(xmin*0.9, xmax*1.1)
     residualGraphX.GetYaxis().SetRangeUser(-0.1,0.1)
     residualGraphX.SetMarkerStyle(7)
     residualGraphX.GetYaxis().SetNdivisions(3,5,0)
-    
-    
+
+
     residualGraphX.GetXaxis().SetLabelSize(0.15)
     residualGraphX.GetYaxis().SetLabelSize(0.15)
     residualGraphX.GetYaxis().SetTitle("Residuals")
@@ -164,9 +166,9 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     residualGraphX.GetXaxis().SetTitleSize(0.15)
     residualGraphX.GetYaxis().SetTitleSize(0.15)
     residualGraphX.GetYaxis().SetTitleOffset(0.33)
-    
+
     p1.cd()
-    
+
     if not verbose:
         Quiet(c1.SaveAs)(saveName)
     else:
@@ -178,7 +180,7 @@ def saveOnFail(inputDir):
     for root,dirnames,filenames in os.walk(os.path.join(inputDir,"Submission")):
         for filename in fnmatch.filter(filenames,'*.json'):
             fileList.append(os.path.join(root,filename))
-    
+
     for fName in fileList:
         rootFile = TFile.Open(fName.replace(".json",".root").replace("70/","70/fitResults_"),'read')
 
@@ -194,18 +196,18 @@ def saveOnFail(inputDir):
         shuntMult = 1
         useCalibrationMode = True
         verbose = False
-    
-    
+
+
         ###################################################
         # Getting Values From json
         ###################################################
         inFile = open(fName,"r")
-    
+
         jsonFile = json.load(inFile)
 
-        
+
         qieUniqueID = os.path.splitext(os.path.basename(fName))[0]
-   
+
         if jsonFile['Result']:
             continue
 
@@ -235,7 +237,7 @@ def saveOnFail(inputDir):
                 saveName += "/LinADCvsfC"
                 if qieNumber != 0: 
                     saveName += "_qie"+str(badChip)
-                
+
                 saveName += ".png"
                 canv = TCanvas("c")
                 text = TPaveText(0.05,0.1,0.95,0.8)
