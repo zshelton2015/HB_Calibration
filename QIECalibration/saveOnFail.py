@@ -154,7 +154,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     graph.GetYaxis().SetRangeUser(ymin*.9,ymax*1.1)
 
     residualGraphX.GetXaxis().SetRangeUser(xmin*0.9, xmax*1.1)
-    residualGraphX.GetYaxis().SetRangeUser(-0.1,0.1)
+    residualGraphX.GetYaxis().SetRangeUser(-1*max(max((resArray),abs(min(resArray))),max(max(resArray),abs(min(resArray)))))
     residualGraphX.SetMarkerStyle(7)
     residualGraphX.GetYaxis().SetNdivisions(3,5,0)
 
