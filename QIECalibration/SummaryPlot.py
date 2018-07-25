@@ -145,14 +145,14 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
             #if not os.path.exists("data/%s/Run_%s/SummaryPlots/TotalPlots"%(date, run)):
                 #os.makedirs("data/%s/Run_%s/SummaryPlots/TotalPlots"%(date, run))
                 # Modify rootout change title of output ROOT file
-        
+
         rootout = TFile("data/%s/Run_%s/fitResults_%s.root" %(date, run, name), "update")
         rootout.cd("SummaryPlots")
         if(verbose):
             print "Now analyzing card %s" %nameid
         if(runAll):
             for ra in bins:
-                r = ra[0]    
+                r = ra[0]
                 for shu in shunts:
                     sh = shu[0]
                     if (r == 2 or r == 3) and (sh != 1):
@@ -186,7 +186,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         histSlopeNvSlope1.append(TH2D("Slope_Shunt_%s_vs_Shunt_1_R_%i"%(str(sh).replace(".",""),r),"%s Slope of Shunt %.1f vs Shunt 1 - Range %i"%(name,sh,r),100,minimum1,maximum1,100,minimums,maximums))
                         histSlopeNvSlope1[-1].GetXaxis().SetTitle("Shunt 1 Slope")
                         histSlopeNvSlope1[-1].GetYaxis().SetTitle("Shunt %.1f Slope"%sh)
-            
+
                     #Create 2D histogram of slope vs qie
                     if(slVqie):
                         histSlvQie.append(TH2D("SlopeVsQIE_Shunt_%s_Range_%d"%(str(sh).replace(".",""),r),"%s Slope Vs QIE Shunt %.1f Range %d"%(name,sh,r),16,0.5,16.5,40,minimums,maximums))
@@ -200,7 +200,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         histShuntFactor[-1].GetYaxis().SetTitle("Frequency")
 
                 #Create Histograms for the Offsets
-                    
+
                     maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
                     maximumo,minimumo = maxmin[0]
                     maximumo  = max(plotBoundaries_offset[r], maximum)
@@ -306,7 +306,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     histoffset[-1].Write()
                     c[-1].Update()
                     if(images):
-                       
+
                         Quiet(c[-1].SaveAs)("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(date, run, name,name, str(sh).replace(".",""), r))
                     if(hist2D):
                         histSlopeNvSlope1[-1].Write()
@@ -504,158 +504,28 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         rootout.Close()
         if logoutput:
             sys.stdout = originalSTDOUT
-#   sys.stderr = originalSTDERR
 
-def slopeFailTh(sh, r, name,slope,thshunt = .3,pct = .1):
-    maxt=(thshunt/sh)+(thshunt/sh)*THRESHOLD
-    mint=(thshunt/sh)-(thshunt/sh)*THRESHOLD
-    failure = False
-    if sh == 1:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 1.5:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 2:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 3:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 4:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 5:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 6:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 7:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 8:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 9:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 10:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 11:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    if sh == 11.5:
-        if (mint > slope or slope > maxt):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure = True
-    return failure
 # THIS PASS FAIL USES HARDCODED SLOPE VALUES TO DETERMINE ERRORS
 def slopeFailH(sh, r, name,slope,thshunt = .3,pct = .1):
     from selectionCuts import *
     failure = False
     if slope<failureconds[sh][0] or slope > failureconds[sh][1]:
         failure = True
-    # if sh ==1:
-    #     if (.28 > slope or slope > .331):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 1.5:
-    #     if (.19 > slope or slope > .225):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 2:
-    #     if (.147 > slope or slope > .168):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 3:
-    #     if (.099 > slope or slope > .1135):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 4:
-    #     if (.075 > slope or slope > .0865):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 5:
-    #     if (.0595 > slope or slope > .069):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 6:
-    #     if (.05 > slope or slope > .0575):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 7:
-    #     if (.0425 > slope or slope > .495):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 8:
-    #     if (.037 > slope or slope > .044):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 9:
-    #     if (.033 > slope or slope > .039):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 10:
-    #     if (.03 > slope or slope > .0355):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 11:
-    #     if (.027 > slope or slope > .032):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
-    # if sh == 11.5:
-    #     if (.025 > slope or slope > .03):
-    #         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-    #         failure = True
     return failure
 
 def offsetFail(r,offset,name):
+    from selectionCuts import *
     failure= False
-    if r == 0:
-        if (offset > 0 or offset < -1):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure=True
-    if r == 1:
-        if (offset > 13 or offset < -13):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure=True
-    if r == 2:
-        if (offset > 80 or offset < -80):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure=True
-    if r == 3:
-        if (offset > 800 or offset < -800):
-            # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
-            failure=True
+    if (offset > failcondo[r] or offset < -(failcondo[r])):
+        # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
+        failure=True
     return failure
+
 def poorfit(maxr, r):
+    from selectionCuts import *
     failure = False
-    if r == 0:
-        if (maxr > 4.5):
-            failure=True
-    if r == 1:
-        if (maxr > 35):
-            failure=True
-    if r == 2:
-        if (maxr > 301):
-            failure=True
-    if r == 3:
-        if (maxr > 2000):
-            failure=True
+    if (maxr > maxResiduals[r]):
+        failure=True
     return failure
 
 ###################################################################################
