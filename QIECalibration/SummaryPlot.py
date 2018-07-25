@@ -522,7 +522,6 @@ def offsetFail(r,offset,name):
         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
         failure=True
     return failure
-
 def poorfit(maxr, r):
     from selectionCuts import *
     failure = False
