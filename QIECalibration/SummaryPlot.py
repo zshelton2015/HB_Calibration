@@ -15,26 +15,7 @@ from MergeDatabases import MergeDatabases
 from selectionCuts import *
 from utils import Quiet
 
-
-people = {'Brooks':'Brooks McMaster',
-          'Bryan':'Bryan Caraway',
-          'Caleb':'Caleb Smith',
-          'Chris':'Chris Madrid',
-          'Danny':'Danny "HF" Noonan',
-          'Frank':'Frank Jensen',
-          'Grace':'Grace Cummings',
-          'Joe':'Joe Pastika',
-          'Kamal':'Kamal Lamichhane',
-          'Loriza':'Loriza Hasa',
-          'Mark':'Mark Saunders',
-          'Nadja':'Nadja Strobbe',
-          'Nesta':'Nesta Lenhert',
-          'Sezen':'Sezen Sekmen',
-          'ZachE':'Zach Eckert',
-          'Eckert':'Zach Eckert',
-          'ZachS':'Zach Shelton',
-          'Shelton':'Zach Shelton',
-          }
+from RunCalibration import people
 
 backAdapter = [1,2,3,4,9,10,11,12]
 
@@ -325,11 +306,11 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 if offset[0] < rangemean[r][0] or offset[0] > rangemean[r][1]:
                     OffsetMean.append((s,r))
                     Result = False
-                        if(verbose):
-                            print "qie and capid is indicative of a failure in the mean of the Offset"
+                    if(verbose):
+                        print "qie and capid is indicative of a failure in the mean of the Offset"
         rootout.Close()
         FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit,'Bad Mean Offset':OffsetMean}})
-        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits,'Bad Mean Offset':OffseMean}}
+        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':tester, 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits,'Bad Mean Offset':OffsetMean}}
         file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
         json.dump(cardplaceholder, file1)
     if (adapterTest):
@@ -520,7 +501,7 @@ def offsetFail(r,offset,name):
     if r==0:
         if (offset > -.45 or offset < -.55):
             failure = True
-    elif (offset > failcondo[r] or offset < -(failcondo[r])):
+    elif (offset > failcondo[r][0] or offset < -1*(failcondo[r][0])):
         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
         failure=True
     return failure
@@ -553,4 +534,4 @@ if __name__ == "__main__":
     options = parser.parse_args()
 
 #    SummaryPlot(options)
-    SummaryPlot(runAll = options.all, dbnames = options.dbnames, uid = options.uid, total = options.total, date1 = options.date, run1 = options.run, hist2D = options.hist2D, shFac = options.shFac, images = options.images, verbose = options.verbose, slVqie = options.slVqie,logoutput = options.log,tester1 =options.tester)
+    SummaryPlot(runAll = options.all, dbnames = options.dbnames, uid = options.uid, total = options.total, date1 = options.date, run1 = options.run, hist2D = options.hist2D, shFac = options.shFac, images = options.images, verbose = options.verbose, slVqie = options.slVqie,logoutput = options.log,tester1 =people[options.tester])
