@@ -15,7 +15,7 @@ from MergeDatabases import MergeDatabases
 from selectionCuts import *
 from utils import Quiet
 
-from RunCalibration import people
+from RunCalibrations import people
 
 backAdapter = [1,2,3,4,9,10,11,12]
 
