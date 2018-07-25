@@ -516,7 +516,9 @@ def slopeFailH(sh, r, name,slope,thshunt = .3,pct = .1):
 def offsetFail(r,offset,name):
     from selectionCuts import *
     failure= False
-    if (offset > failcondo[r] or offset < -(failcondo[r])):
+    if r==0:
+        if (offset > -.45 or offset < -.55)
+    elif (offset > failcondo[r] or offset < -(failcondo[r])):
         # print "Slope Value in Card %s in Shunt %.1f in Range %i failed" % (name, sh, r)
         failure=True
     return failure
