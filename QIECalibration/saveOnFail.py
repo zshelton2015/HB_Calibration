@@ -21,7 +21,7 @@ try:
 except NameError:
     from utils import Quiet
 
-def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
+def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=False):
     tGraphDir = rootFile.Get("LinadcVsCharge")
     fitLineDir = rootFile.Get("fitLines")
     fName = rootFile.GetName()
@@ -134,7 +134,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     text.SetFillStyle(8000)
     ######### Add in Cut Values #############
     text.AddText("Slope =  %.4f +- %.4f LinADC/fC [%.4f,%.4f]" % (fitLine.GetParameter(1), fitLine.GetParError(1),failureconds[shuntMult][0],failureconds[shuntMult][1]))
-    text.AddText("Offset =  %.2f +- %.2f LinADC [%.1f,%.1f]" % (fitLine.GetParameter(0), fitLine.GetParError(0),failcondo[i_range][0],-1*failcondo[i_range][0]))
+    text.AddText("Offset =  %.2f +- %.2f LinADC [%.1f,%.1f]" % (fitLine.GetParameter(0), fitLine.GetParError(0),-1*failcondo[i_range][0],-failcondo[i_range][0]))
     text.AddText("Max Residuals = %f [%f]"%(maxResi,maxResiduals[i_range]))
     text.AddText("Chisquare = %e " % (fitLine.GetChisquare()))
     text.Draw("same")
@@ -162,7 +162,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     # xmax = xmax+10
     #if minCharge < 10: minCharge = -10
 
-   resiPlotBoundaries = [min(-1*maxResi,-1*maxResiduals[i_range]-0.1*maxResiduals[i_range]),max(maxResi,maxResiduals[i_range]+0.1*maxResiduals[i_range])]
+    resiPlotBoundaries = [min(-1*maxResi,-1*maxResiduals[i_range]-0.1*maxResiduals[i_range]),max(maxResi,maxResiduals[i_range]+0.1*maxResiduals[i_range])]
 
     graph.GetXaxis().SetRangeUser(xmin*0.9, xmax*1.1)
     graph.GetYaxis().SetRangeUser(ymin*.9,ymax*1.1)
@@ -274,7 +274,7 @@ def saveOnFail(inputDir):
         for failMode in failModeList:
 
             shuntMult, i_range, qieNumber, i_capID = failMode
-            maxResi = cursor.execute("select maxResidual from qieshuntparams where shunt = %f and range = %d and qie =%d and capID =%d"%(shuntMult,i_range,qieNumber,i_capID))
+            maxResi = cursor.execute("select maxResidual from qieshuntparams where shunt = %f and range = %d and qie =%d and capID =%d"%(shuntMult,i_range,qieNumber,i_capID)).fetchone()[0]
             saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi)
 
 if __name__ == '__main__':
