@@ -15,6 +15,7 @@ from ast import literal_eval    # Safe eval
 from ROOT import *
 from threading import Timer
 import json
+from datetime import datetime
 
 # 0x : value must start with literal '0x'
 # [A-Fa-f0-0] : only values of A-F, a-f, or 0-9 allowed
@@ -68,7 +69,12 @@ def histoRun(outF, outputPipe=sys.stdout, uHTR = 1, timeout = 10):
 
     #popen("uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (uHTR*4)).read()
     #return os.system("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4))
-    return call("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True, stdout=outputPipe, stderr=outputPipe)
+    print "Taking histo run - %s" % datetime.now().strftime("%b %d %Y  %H:%M:%S")
+    sys.stdout.flush()
+    retCode = call("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True, stdout=outputPipe, stderr=outputPipe)
+    sleep(1.0)
+    return retCode
+    
     #return ("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True)
     #print "DONE HERE"
     
@@ -205,7 +211,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
         sys.stdout = origSTDOUT
         print "No cards found! Check that the ngccm server is running and ensure all cards are cabled correctly."
         sys.stdout = stdOutDump
-        
+        setDAC_multi(0) 
         return {}
 
 
@@ -228,6 +234,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 print "Card in RM %d Slot %d has incorrectly mapped igloos: %d Top  %d Bot" % (vals["RM"], vals["Slot"], vals["Top"]/8, vals["Bot"]/8)
                 sys.stdout = stdOutDump
         
+        setDAC_multi(0) 
         return {}
 
 
@@ -311,6 +318,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             sys.stdout = origSTDOUT
             print "Unable to complete histo run for mapping step 3. Check uHTR %d" % uHTR
             sys.stdout = stdOutDump
+            setDAC_multi(0) 
             return {}
 
         # Parse histo run

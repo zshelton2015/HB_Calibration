@@ -100,6 +100,7 @@ def finalImages(dirName=""):
                         loline.DrawLine(-failcondo[ra][0],0,-failcondo[ra][0],hist.GetMaximum()+1)
                         loline.Draw("same")
                 canv.SaveAs(os.path.join(outDir,"Shunt_%s_%s.png"%(str(sh).replace(".",""),uid)))
+            canv.Close()
                         
         rootfile.Close()
 if __name__ == '__main__':

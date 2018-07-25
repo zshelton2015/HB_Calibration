@@ -16,25 +16,25 @@ from selectionCuts import *
 from utils import Quiet
 
 
-people = {'Brooks':'Brooks McMaster',
-          'Bryan':'Bryan Caraway',
-          'Caleb':'Caleb Smith',
-          'Chris':'Chris Madrid',
-          'Danny':'Danny "HF" Noonan',
-          'Frank':'Frank Jensen',
-          'Grace':'Grace Cummings',
-          'Joe':'Joe Pastika',
-          'Kamal':'Kamal Lamichhane',
-          ':Loriza':'Loriza Hasa',
-          'Mark':'Mark Saunders',
-          'Nadja':'Nadja Strobbe',
-          'Nesta':'Nesta Lenhert',
-          'Sezen':'Sezen Sekmen',
-          'ZachE':'Zach Eckert',
-          'Eckert':'Zach Eckert',
-          'ZachS':'Zach Shelton',
-          'Shelton':'Zach Shelton',
-          }
+# people = {"Brooks":"Brooks McMaster",
+#           "Bryan":"Bryan Caraway",
+#           "Caleb":"Caleb Smith",
+#           "Chris":"Chris Madrid",
+#           "Danny":"""Danny "HF" Noonan""",
+#           "Frank":"Frank Jensen",
+#           "Grace":"Grace Cummings",
+#           "Joe":"Joe Pastika",
+#           "Kamal":"Kamal Lamichhane",
+#           "Loriza":"Loriza Hasa",
+#           "Mark":"Mark Saunders",
+#           "Nadja":"Nadja Strobbe",
+#           "Nesta":"Nesta Lenhert",
+#           "Sezen":"Sezen Sekmen",
+#           "ZachE":"Zach Eckert",
+#           "Eckert":"Zach Eckert",
+#           "ZachS":"Zach Shelton",
+#           "Shelton":"Zach Shelton",
+#           }
 
 backAdapter = [1,2,3,4,9,10,11,12]
 
@@ -314,7 +314,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 if(verbose):
                     print "Card %s Shunt %.1f Range %d Finished"%(name,sh,r)
 	FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit}})
-	cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':people[tester], 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
+	cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':tester, 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits}}
 	file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
 	json.dump(cardplaceholder, file1)
 	    
