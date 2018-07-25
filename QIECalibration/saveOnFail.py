@@ -134,7 +134,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=Fals
     text.SetFillStyle(8000)
     ######### Add in Cut Values #############
     text.AddText("Slope =  %.4f +- %.4f LinADC/fC [%.4f,%.4f]" % (fitLine.GetParameter(1), fitLine.GetParError(1),failureconds[shuntMult][0],failureconds[shuntMult][1]))
-    text.AddText("Offset =  %.2f +- %.2f LinADC [%.1f,%.1f]" % (fitLine.GetParameter(0), fitLine.GetParError(0),-1*failcondo[i_range][0],-failcondo[i_range][0]))
+    text.AddText("Offset =  %.2f +- %.2f LinADC [%.1f,%.1f]" % (fitLine.GetParameter(0), fitLine.GetParError(0),-1*failcondo[i_range][0],failcondo[i_range][0]))
     text.AddText("Max Residuals = %f [%f]"%(maxResi,maxResiduals[i_range]))
     text.AddText("Chisquare = %e " % (fitLine.GetChisquare()))
     text.Draw("same")
