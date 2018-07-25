@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from os import system,popen
-from subprocess import Popen,PIPE
+from subprocess import Popen,PIPE,call
 from textwrap import dedent
 import sys
 from time import sleep
@@ -33,7 +33,9 @@ hexfind = re.compile(r"0x[A-Fa-f0-9]+")
 #uHTRToQIECard[0] = {"RM":4, "Slot":1, "Igloo":"Top"}
 #uHTRToQIECard[1] = {"RM":4, "Slot":1, "Igloo":"Bot"}
 
-def histoRun(outF, uHTR = 1):
+
+# Take a histo run and timeout after specified number of seconds
+def histoRun(outF, outputPipe=sys.stdout, uHTR = 1, timeout = 10):
     startCommands = dedent("""\
                     link
                     histo
@@ -64,18 +66,22 @@ def histoRun(outF, uHTR = 1):
         timer.cancel()
     """
 
-    popen("uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (uHTR*4)).read()
-
+    #popen("uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (uHTR*4)).read()
+    #return os.system("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4))
+    return call("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True, stdout=outputPipe, stderr=outputPipe)
+    #return ("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True)
     #print "DONE HERE"
     
 
 def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
-
     origSTDOUT = sys.stdout
     runDir = tmpDir.split('.tmp')[0]
-    stdOutDump = open("%s/mapLinksOutput.stdout"%runDir, 'w')
+    stdOutDump = open("%smapLinksOutput.stdout" % ((runDir + "/") if runDir is not '' else ''), 'w')
     sys.stdout = stdOutDump
-
+    
+    # Seconds to wait before killing uHTRtool with a timeout
+    timeout = 20    
+    
     with open(configFile, "r") as f:
         for i,line in enumerate(f):
             if line[0] == "#":
@@ -102,7 +108,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
 
     # Step 1: Map uHTR fiber to Igloo
     print "Mapping uHTR links to QIE Igloos"
-    print setDAC_multi(40000,quiet=True)
+    setDAC_multi(40000)
     print "" 
     # Turn on fixed range mode and set all to range 0
     #fixRangeCmds = ["put %s-[1-4]-QIE[1-64]_FixRange 256*0" % RBX, \
@@ -146,7 +152,15 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             print "" 
             
             # Take histo run
-            histoRun("%s/uHTRToIgloo/rm_%d_slot_%d.root" % (tmpDir, rm, slot), uHTR)
+            if histoRun("%s/uHTRToIgloo/rm_%d_slot_%d.root" % (tmpDir, rm, slot), outputPipe=stdOutDump, uHTR=uHTR, timeout=timeout) != 0:
+                # uHTRtool was killed by timeout
+                print "Unable to complete histo run for mapping step 1. Check uHTR %d" % uHTR
+                sys.stdout = origSTDOUT
+                print "Unable to complete histo run for mapping step 1. Check uHTR %d" % uHTR
+                sys.stdout = stdOutDump
+
+                setDAC_multi(0)
+                return {}
             
             # Load histo run file
             f = TFile.Open("%s/uHTRToIgloo/rm_%d_slot_%d.root" % (tmpDir, rm, slot), "read")
@@ -181,6 +195,41 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                     "put %s-[1-4]-QIE[1-64]_RangeSet 256*0" % RBX]
     send_commands(cmds = fixRangeCmds)
 
+    if len(uidlist) == 0:
+        # No cards found. Exiting!
+
+        # Print error message to log file
+        print "No cards found! Check that the ngccm server is running and ensure all cards are cabled correctly."
+        
+        # Print error message to screen as well
+        sys.stdout = origSTDOUT
+        print "No cards found! Check that the ngccm server is running and ensure all cards are cabled correctly."
+        sys.stdout = stdOutDump
+        
+        return {}
+
+
+    # Check that the expected number of QIE channels were found per card
+    if len(histoMap.keys()) != len(uidlist) * 16:
+        # One of the igloos was not correctly mapped
+        mappedIgloos = {}
+        for h in sorted(histoMap.keys()):
+            if uid not in mappedIgloos.keys():
+                mappedIgloos[uid] = {"RM":h["RM"], "Slot":h["Slot"], "Top":0, "Bot":0}
+            if h["Igloo"] == "Top":
+                mappedIgloos[uid]["Top"] += 1
+            else:
+                mappedIgloos[uid]["Bot"] += 1
+
+        for uid,vals in mappedIgloos.iteritems():
+            if vals["Top"] != 8 or vals["Bot"] != 8:
+                print "Card in RM %d Slot %d has incorrectly mapped igloos: %d Top  %d Bot" % (vals["RM"], vals["Slot"], vals["Top"]/8, vals["Bot"]/8)
+                sys.stdout = origSTDOUT
+                print "Card in RM %d Slot %d has incorrectly mapped igloos: %d Top  %d Bot" % (vals["RM"], vals["Slot"], vals["Top"]/8, vals["Bot"]/8)
+                sys.stdout = stdOutDump
+        
+        return {}
+
 
     # Write uids to text file
     with open("uidlist.txt", "w") as f:
@@ -191,21 +240,33 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     os.system("./barcodeFromUID.sh")
     with open("mapping.json", "r") as f:
         barcodes = dict(literal_eval(f.read()))
-  
-    os.system("mv uidlist.txt %s/uidlist.txt" % runDir)
-    os.system("mv mapping.json %s/mapping.json" % runDir)
+ 
+    if runDir is not '':
+        os.system("mv uidlist.txt %s/uidlist.txt" % runDir) 
+        os.system("mv mapping.json %s/mapping.json" % runDir) 
 
     pprint(barcodes)
+   
+    print "\nHisto map after step 1:\n"
+    pprint(histoMap)
     
     # Step 2: Map QI board to QIE card
     print "\nMapping QI boards to QIE cards"
     #for QIslot in xrange(1,9):
     for QIslot in sorted(QI_SlotToBoard.keys()): 
         # Turn on QI board in slot QIslot and inject in all channels
-        print setDAC_multi(10000, "%s" % QIslot, quiet=True)
+        setDAC_multi(10000, "%s" % QIslot)
         
         # Take histo run
-        histoRun("%s/QIslotToQIEcard/QIslot_%d.root" % (tmpDir, QIslot), uHTR)
+        if histoRun("%s/QIslotToQIEcard/QIslot_%d.root" % (tmpDir, QIslot), outputPipe=stdOutDump, uHTR=uHTR, timeout=timeout) != 0:
+            # uHTRtool was killed by timeout
+            print "Unable to complete histo run for mapping step 2. Check uHTR %d" % uHTR
+            sys.stdout = origSTDOUT
+            print "Unable to complete histo run for mapping step 2. Check uHTR %d" % uHTR
+            sys.stdout = stdOutDump
+            
+            setDAC_multi(0)
+            return {}
 
         # Parse histo file
         f = TFile.Open("%s/QIslotToQIEcard/QIslot_%d.root" % (tmpDir, QIslot))
@@ -228,10 +289,12 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                         print "Can't find h%d in histoMap!" % h_i
         f.Close()
     
+    print "\nHisto map after step 2:\n"
+    pprint(histoMap)
+
     # Step 3: Map QI channel to QIE channel
     print "\nMapping QI channels to QIE channels"
 
-    print histoMap
 
     # Set of good RM/Slot/Barcode/UIDs
     goodSlots = set() 
@@ -239,10 +302,16 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     # Only need to loop over odd channels
     for QIchannel in xrange(1,17):
         # Turn on channel QIchannel for all boards
-        print setDAC_multi("%d:10000" % QIchannel, quiet=True)
+        setDAC_multi("%d:10000" % QIchannel)
 
         # Take histo run
-        histoRun("%s/QIchannelTOQIEchannel/QIchannel_%d.root" % (tmpDir, QIchannel), uHTR)
+        if histoRun("%s/QIchannelTOQIEchannel/QIchannel_%d.root" % (tmpDir, QIchannel), outputPipe=stdOutDump, uHTR=uHTR, timeout=timeout) != 0:
+            # uHTRtool was killed by timeout
+            print "Unable to complete histo run for mapping step 3. Check uHTR %d" % uHTR
+            sys.stdout = origSTDOUT
+            print "Unable to complete histo run for mapping step 3. Check uHTR %d" % uHTR
+            sys.stdout = stdOutDump
+            return {}
 
         # Parse histo run
         f = TFile.Open("%s/QIchannelTOQIEchannel/QIchannel_%d.root" % (tmpDir, QIchannel))
@@ -259,14 +328,18 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     goodSlotOutput = {}
     for card in sorted(goodSlots, key=lambda goodSlots:(goodSlots[0],goodSlots[1])):
         goodSlotOutput[card[3]] = {"Barcode":card[2],"RM":card[0],"Slot":card[1]}
-    with open("%s/goodSlots.json" % os.path.dirname(outF),'w') as f:
+    outDir = os.path.dirname(outF)
+    if outDir is not '': outDir += "/"
+    with open("%sgoodSlots.json" % outDir, 'w') as f:
         json.dump(goodSlotOutput, f)
 
-    with open("%s/goodSlots.txt" % os.path.dirname(outF),'w') as f:
-        f.write("RM  Slot  Barcode\tUniqueID\n\n")
+    with open("%sgoodSlots.txt" % outDir,'w') as f:
+        f.write("RM  Slot  Barcode\tUniqueID\n" + "="*45 + "\n")
         for card in sorted(goodSlots, key=lambda goodSlots:(goodSlots[0],goodSlots[1])):
             f.write("%d    %d    %s\t%s\n" % (card[0], card[1], card[2], card[3]))
 
+    setDAC_multi(0)
+    
     # Check mapping and flag problem slots
     problemSlots = []
     for h in sorted(histoMap.keys()):
@@ -288,8 +361,8 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             print "Error mapping card in RM %d Slot %d, check connections on this slot" % (rm,slot)
         return {}
 
+    print "Final histo map:\n"
     pprint(histoMap)
-    print setDAC_multi(0,quiet=True)
     #os.system("rm -rf %s" % tmpDir)
 
     if outF != "":
@@ -313,6 +386,7 @@ if __name__ == "__main__":
     if args.outDir[-1] == "/": args.outDir = args.outDir[:-1]
 
     histoMap = mapLinks()
+    pprint(histoMap)
     os.system("mkdir -p %s" % args.outDir)
     
     with open("%s/histoMap.txt" % args.outDir, "w+") as f:
