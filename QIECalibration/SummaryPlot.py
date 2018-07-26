@@ -67,10 +67,10 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         if tester in people:
             tester = people[tester]
     elif type(tester) == type(""):
-        if tester1 in people:
-            tester = people[tester1]
-#        elif tester1 in people.values():
-#            tester = tester1
+        if tester in people:
+            tester = people[tester]
+        elif tester1 in people.values():
+            tester = tester1
         else:
             print "Tester not in list of testers"
     else:
