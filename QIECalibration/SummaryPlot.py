@@ -20,6 +20,7 @@ people = {'Brooks':'Brooks McMaster',
           'Caleb':'Caleb Smith',
           'Chris':'Chris Madrid',
           'Danny':'Danny "HF" Noonan',
+          'Ian':'Ian McAlister',
           'Frank':'Frank Jensen',
           'Grace':'Grace Cummings',
           'Joe':'Joe Pastika',
@@ -69,8 +70,8 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     elif type(tester) == type(""):
         if tester in people:
             tester = people[tester]
-        elif tester1 in people.values():
-            tester = tester1
+        elif tester in people.values():
+            tester = tester
         else:
             print "Tester not in list of testers"
     else:
