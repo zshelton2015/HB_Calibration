@@ -72,7 +72,7 @@ def histoRun(outF, outputPipe=sys.stdout, uHTR = 1, timeout = 10):
     print "Taking histo run - %s" % datetime.now().strftime("%b %d %Y  %H:%M:%S")
     sys.stdout.flush()
     retCode = call("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True, stdout=outputPipe, stderr=outputPipe)
-    sleep(1.0)
+    sleep(2.0)
     return retCode
     
     #return ("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True)
@@ -139,6 +139,17 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                               "get %s-%d-QIE[%d-%d]_FixRange" % (RBX, rm, (slot-1)*16 + 1, slot*16), \
                               "get %s-%d-QIE[%d-%d]_RangeSet" % (RBX, rm, (slot-1)*16 + 1, slot*16)]
             ngccm_output = send_commands(cmds = iglooRangeCmds)
+            if len(ngccm_output) == 0:
+                # Server timeout. Try again
+                ngccm_output = send_commands(cmds = iglooRangeCmds)
+                if len(ngccm_output) == 0:
+                    # Fail
+                    print "ngccm server timout"
+                    sys.stdout = origSTDOUT
+                    print "ngccm server timout"
+                    sys.stdout = stdOutDump
+                    return {}
+                
             if ngccm_output[0]["result"].find("ERROR") >= 0:
                 # Card not found, continue
                 print "Card not found in rm %d slot %d!" % (rm,slot)
@@ -199,7 +210,18 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     # Turn off fixed range mode and set all to range 0
     fixRangeCmds = ["put %s-[1-4]-QIE[1-64]_FixRange 256*0" % RBX, \
                     "put %s-[1-4]-QIE[1-64]_RangeSet 256*0" % RBX]
-    send_commands(cmds = fixRangeCmds)
+    fixRangeOutput = send_commands(cmds = fixRangeCmds)
+
+    if len(fixRangeOutput) == 0:
+        # Server timeout. Try again
+        fixRangeOutput = send_commands(cmds = fixRangeCmds)
+        if len(fixRangeOutput) == 0:
+            # Fail
+            print "ngccm server timout"
+            sys.stdout = origSTDOUT
+            print "ngccm server timout"
+            sys.stdout = stdOutDump
+            return {}
 
     if len(uidlist) == 0:
         # No cards found. Exiting!

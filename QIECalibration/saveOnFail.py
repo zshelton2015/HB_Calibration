@@ -128,7 +128,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=Fals
     xmax = graph.GetXaxis().GetXmax()
     ymin = graph.GetYaxis().GetXmin()
     ymax = graph.GetYaxis().GetXmax()
-    text = TPaveText(xmin + (xmax-xmin)*.2, ymax - (ymax-ymin)*(.3),xmin + (xmax-xmin)*.6,ymax-(ymax-ymin)*.1)
+    text = TPaveText(xmin + (xmax-xmin)*.1, ymax - (ymax-ymin)*(.5),xmin + (xmax-xmin)*.6,ymax-(ymax-ymin)*.1)
     text.SetFillColor(kWhite)
     text.SetTextSize(0.75*text.GetTextSize())
     text.SetFillStyle(8000)
@@ -251,7 +251,7 @@ def saveOnFail(inputDir):
                 if saveName[-1]!='/':
                     saveName += '/'
                 saveName += "plots"
-                saveName += "/LinADCvsfC"
+                saveName += "/999_LinADCvsfC"
                 if qieNumber != 0: 
                     saveName += "_qie"+str(badChip)
 

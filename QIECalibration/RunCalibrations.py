@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import sys
 from datetime import datetime
 import sys
 import subprocess
@@ -59,7 +59,10 @@ import QIECalibrationScan
 print "%s, Starting Calibration Run"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 runDir = QIECalibrationScan.QIECalibration()
-
+if runDir == "":
+    # ngccm server crashed. Abort
+    sys.stdout = originalSTDOUT
+    sys.exit()
 
 sys.stdout = originalSTDOUT
 
