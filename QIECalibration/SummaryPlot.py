@@ -58,11 +58,19 @@ THRESHOLD = .15
 
 from ROOT import *
 #def SummaryPlot(options):
-def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, run1=None, hist2D=False, shFac=False, adapterTest=False,images=False, verbose=False, slVqie=False, tester1 = "Shelton",logoutput=False):
+def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = "", hist2D=False, shFac=False, adapterTest=False,images=False, verbose=False, slVqie=False, tester1 = "Shelton",logoutput=False):
     # Get required arguments from options
     tester = tester1
-    run = run1[0]
-    date = date1[0]
+    indir = idir[0]
+    date = indir[5:15]
+    run = indir[-1]
+
+    if indir == None:
+        print "invalid indirectory"
+        exit
+    if indir[-1] != "/":
+        indir+="/"
+    run = indir[20:-2]
     if type(tester) == type([]):
         tester = tester[0]
         if tester in people:
@@ -109,18 +117,19 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
     FailedCards = []
     FailedSlopes =[]
     FailedOffset = []
+    FailedRange = []
     #Grab File Names
-    if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
-        os.makedirs("data/%s/Run_%s/SummaryPlots"%(date,run))
+    if not os.path.exists("%sSummaryPlots"%(indir)):
+        os.makedirs("%sSummaryPlots"%(indir))
     if(runAll or total or not uid is None):
-        files = glob.glob("data/%s/Run_%s/qieCalibrationParameters*.db"%(date,run))
+        files = glob.glob("%sqieCalibrationParameters*.db"%(indir))
     elif(len(dbnames) != 0):
         files = []
         for f in dbnames:
-            files.append(glob.glob("data/%s/Run_%s/%s"%(date,run,f))[0])
+            files.append(glob.glob("%s/%s"%(indir,f))[0])
     print files
-    MergeDatabases(files, "data/%s/Run_%s/"%(date, run),"MergedDatabaseRun%s.db"%run)
-    xyz1234 = sqlite3.connect("data/%s/Run_%s/MergedDatabaseRun%s.db"%(date, run,run))
+    MergeDatabases(files, indir,"MergedDatabaseRun%s.db"%run)
+    xyz1234 = sqlite3.connect("%sMergedDatabaseRun%s.db"%(indir,run))
     cursor = xyz1234.cursor()
     TGaxis.SetMaxDigits(3)
     #files = cursor.excute("Select distinct runDirectory from qieshuntparams").Fetchall()
@@ -136,12 +145,13 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         name = nameList[0]
         nameid = name.replace("u","")
         name = nameid.replace("'","")
-        if not os.path.exists("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput"%(date,run,name)):
-             os.makedirs("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput"%(date,run,name))
+        if not os.path.exists("%sSummaryPlots/%s/ImagesOutput"%(indir,name)):
+             os.makedirs("%sSummaryPlots/%s/ImagesOutput"%(indir,name))
         FailedCards = []
         FailedSlope =[]
         FailedOffset = []
         poorfits = []
+        FailedRange = []
         OffsetMean = []
         if not uid is None:
             if name not in uid:
@@ -149,13 +159,13 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
             FailedCards = []
         if logoutput:
                 originalSTDOUT = sys.stdout
-                stdOutDump = open("data/%s/Run_%d/SummaryPlots/SummaryPlot.stdout"%(date,run), 'w+')
+                stdOutDump = open("%sSummaryPlots/SummaryPlot.stdout"%(indir), 'w+')
                 sys.stdout = stdOutDump
             #if not os.path.exists("data/%s/Run_%s/SummaryPlots/TotalPlots"%(date, run)):
                 #os.makedirs("data/%s/Run_%s/SummaryPlots/TotalPlots"%(date, run))
                 # Modify rootout change title of output ROOT file
 
-        rootout = TFile("data/%s/Run_%s/fitResults_%s.root" %(date, run, name), "update")
+        rootout = TFile("%sfitResults_%s.root" %(indir, name), "update")
         rootout.cd("SummaryPlots")
         if(verbose):
             print "Now analyzing card %s" %nameid
@@ -168,7 +178,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                         continue
                     # Fetch the values of slope and offset for the corresponding shunt and range
                     #values = cursor.execute("select slope,offset from qieshuntparams where range=%i and shunt=%.1f and id = '%s';" % (r, sh,name)).fetchall()
-                    values = cursor.execute("select slope, range, offset, qie, capid, id, maxResidual, (SELECT slope from qieshuntparams where id=p.id and qie=p.qie and capID=p.capID and range=p.range and shunt=1) from qieshuntparams as p where range = %i and shunt = %.1f and id = '%s';"%(r,sh,name)).fetchall()
+                    values = cursor.execute("select slope, range, offset, qie, capid, maxX,minX, id, maxResidual, (SELECT slope from qieshuntparams where id=p.id and qie=p.qie and capID=p.capID and range=p.range and shunt=1) from qieshuntparams as p where range = %i and shunt = %.1f and id = '%s';"%(r,sh,name)).fetchall()
 
                 # Fetch Max and minimum values for slope of shunt
                     maxmin = cursor.execute("select max(slope),min(slope) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
@@ -211,12 +221,8 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 #Create Histograms for the Offsets
                     maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
                     maximum,minimum = maxmin[0]
-                    if r==0:
-                        maximumo  = max(-0.25, maximum)
-                        minimumo  = min(-0.75, minimum)
-                    else:
-                        maximumo  = max(plotBoundaries_offset[r], maximum)
-                        minimumo  = min(-1*plotBoundaries_offset[r], minimum)
+                    maximumo  = max(plotBoundaries_offset[r], maximum)
+                    minimumo  = min(-1*plotBoundaries_offset[r], minimum)
                     test = []
                     c[-1].cd(2)
                     histoffset.append(TH1D("OFFSET_Sh_%s_R_%i" %(str(sh).replace(".",""),r),"%s Shunt %.1f - Range %d" %(name, sh, r), 41, minimumo, maximumo))
@@ -261,7 +267,10 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     # Fills the histograms with the values fetched above
                     for val in values:
                         #slope, offset = val
-                        slope, rang, offset,qie,capid , id,maxr, slSh1= val
+                        slope, rang, offset,qie,capid ,minX,maxX, id,maxr, slSh1= val
+                        if XrangeFail(sh,rang,minX,maxX):
+                            FailedRange.append((sh,rang,qie,capid))
+                            Result = False
                         if slopeFailH(sh,rang,id,slope):
                             FailedSlope.append((sh,rang,qie,capid))
                             Result = False
@@ -318,7 +327,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     histoffset[-1].Write()
                     c[-1].Update()
                     if(images):
-                        Quiet(c[-1].SaveAs)("data/%s/Run_%s/SummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(date, run, name,name, str(sh).replace(".",""), r))
+                        Quiet(c[-1].SaveAs)("%sSummaryPlots/%s/ImagesOutput/%s_SHUNT_%s_RANGE_%i.png"%(indir, name,name, str(sh).replace(".",""), r))
                     if(hist2D):
                         histSlopeNvSlope1[-1].Write()
                     if(shFac):
@@ -341,12 +350,12 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                     if(verbose):
                         print "qie and capid is indicative of a failure in the mean of the Offset"
         rootout.Close()
-        FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit,'Bad Mean Offset':OffsetMean}})
-        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':tester, 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits,'Bad Mean Offset':OffsetMean}}
-        file1 = open("data/%s/Run_%s/SummaryPlots/%s/%s.json"%(date,run,name,name),"w+")
+        FailedCards.append({name:{'Offset':FailedOffset,'Slope':FailedSlope,'poor fit': poorfit,'Bad Mean Offset':OffsetMean,'Range Failures':FailedRange}})
+        cardplaceholder = {'Result':Result,'date':date, 'run':run, 'Tester':tester, 'Comments':{'Offset':FailedOffset,'Slope':FailedSlope, 'Poor fit':poorfits,'Bad Mean Offset':OffsetMean,'Range Failures':FailedRange}}
+        file1 = open("%sSummaryPlots/%s/%s.json"%(indir,name,name),"w+")
         json.dump(cardplaceholder, file1)
     if (adapterTest):
-        rundir = "data/%s/Run_%s/SummaryPlots" % (date, run)
+        rundir = "%sSummaryPlots" %indir
         outdir = "adapterTests"
         os.system("mkdir -p %s/%s" % (rundir, outdir))
         c.append(TCanvas("c","c",1600,1200))
@@ -400,12 +409,12 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
         loline.SetLineColor(2)
         holine = TLine(0,0,0,0)
         holine.SetLineColor(2)
-        if not os.path.exists("data/%s/Run_%s/SummaryPlots"%(date, run)):
-            os.makedirs("data/%s/Run_%s/SummaryPlots"%(date,run))
-        if not os.path.exists("data/%s/Run_%s/SummaryPlots/TotalOutput"%(date, run)):
-            os.makedirs("data/%s/Run_%s/SummaryPlots/TotalOutput"%(date,run))
+        if not os.path.exists("%sSummaryPlots"%indir):
+            os.makedirs("%sSummaryPlots"%indir)
+        if not os.path.exists("%sSummaryPlots/TotalOutput"%indir):
+            os.makedirs("%sSummaryPlots/TotalOutput"%indir)
             # Modify rootout change title of output ROOT file
-        rootout = TFile("data/%s/Run_%s/SummaryPlots/summary_plot_total.root" %(date, run), "recreate")
+        rootout = TFile("%sSummaryPlots/summary_plot_total.root" %indir, "recreate")
         for ra in bins:
             r =ra[0]
             for shu in shunts:
@@ -508,7 +517,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 if(verbose):
                     print "Total Plots Shunt %.1f Range %d Finished"%(sh,r)
         if len(FailedCards) >=1:
-            outputText = open("data/%s/Run_%s/SummaryPlots/Failed_Shunts_and_Ranges.txt"%(date,run),"w+")
+            outputText = open("%sSummaryPlots/Failed_Shunts_and_Ranges.txt"%indir,"w+")
             pprint.pprint(FailedCards, outputText)
             outputText.close()
 
@@ -526,6 +535,13 @@ def slopeFailH(sh, r, name,slope,thshunt = .3,pct = .1):
     if slope<failureconds[sh][0] or slope > failureconds[sh][1]:
         failure = True
     return failure
+def XrangeFail(sh, r,xmin,xmax):
+    from selectionCuts import *
+    failure = False
+    if xmin<xRange[r][sh]['min'] or xmax > xRange[r][sh]['max']:
+        failure = True
+    return failure
+
 
 def offsetFail(r,offset,name):
     from selectionCuts import *
@@ -555,8 +571,6 @@ if __name__ == "__main__":
     parser.add_argument('-f','--files', action="append", dest = 'dbnames', help  = "Creates Summary Plots for a  file(s) list with -f [FILENAME] -f [FILENAME]")
     parser.add_argument('-u','--uniqueID', action="append", dest = 'uid', help  = "Creates Summary Plots for a  file(s) based on Unique IDs list with -u [UniqueID] -u [UniqueID] -u [UniqueID] (format uniqueID as '0xXXXXXXXX_0xXXXXXXXX')")
     parser.add_argument('-t','--total', action="store_true", dest="total", default = False, help = "Creates total histograms for each shunt WARNING Adapter Test Will not be done with this arg(WARNING: TOTAL OUT OF DATE, MAY BE NON_FUNCTIONING")
-    parser.add_argument('-d','--date', required=True, action="append", dest="date", help = "Enter date in format XX-XX-XXXX(Required)")
-    parser.add_argument('-r','--run', required=True, action="append", dest="run", type = int,help = "Enter the number run(Required)")
     parser.add_argument('-2','--hist2D',action="store_true",dest="hist2D",default=False,help="Creates 2D histogram of slope of shunt N vs. slope of shunt 1")
     parser.add_argument('-s','--shuntFactor',action="store_true",dest="shFac",default=False,help="Creates histogram of shunt factors")
     parser.add_argument('--noImages',action="store_false",dest="images",default=True,help="Do not save images")
@@ -564,7 +578,6 @@ if __name__ == "__main__":
     parser.add_argument('--slVqie',action="store_true",dest="slVqie",default=False,help="Create Plot of Slope vs QIE")
     parser.add_argument('--log',action="store_true",dest="log",default=False,help="Dump to .std file")
     parser.add_argument('--tester',required=True,action="append",dest="tester",type=str,help="Define tester")
+    parser.add_argument('-d,''--dir',action="append",dest = "inDir", type = str,help= "enter directory of run")
     options = parser.parse_args()
-
-#    SummaryPlot(options)
-    SummaryPlot(runAll = options.all, dbnames = options.dbnames, uid = options.uid, total = options.total, date1 = options.date, run1 = options.run, hist2D = options.hist2D, shFac = options.shFac, images = options.images, verbose = options.verbose, slVqie = options.slVqie,logoutput = options.log,tester1 =options.tester)
+    SummaryPlot(runAll = options.all, dbnames = options.dbnames, uid = options.uid, total = options.total, idir = options.inDir, hist2D = options.hist2D, shFac = options.shFac, images = options.images, verbose = options.verbose, slVqie = options.slVqie,logoutput = options.log,tester1 =options.tester)
