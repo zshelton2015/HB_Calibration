@@ -5,8 +5,12 @@
 
 import sqlite3
 from shutil import copyfile
+import sys
 
 def MergeDatabases(files,dirName="",outName="mergedDatabase.db"):
+    if not files:
+        print "No database files found in SummaryPlot."
+        sys.exit()
     copyfile(files[0],"".join([dirName,outName]))
     #copyfile(files[0],outName)
     outDatabase = sqlite3.connect("".join([dirName,outName]))
@@ -16,7 +20,7 @@ def MergeDatabases(files,dirName="",outName="mergedDatabase.db"):
         cursor1 = tmp.cursor()
         tmpVals = cursor1.execute("SELECT * from qieshuntparams").fetchall()
         for row in tmpVals:
-            outCursor.execute("""INSERT INTO qieshuntparams VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);""",(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]))
+            outCursor.execute("""INSERT INTO qieshuntparams VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);""",(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15],row[16],row[17]))
         cursor1.close()
     outDatabase.commit()
     
