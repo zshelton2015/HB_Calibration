@@ -130,8 +130,8 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,verbose=False):
     text.SetTextSize(0.75*text.GetTextSize())
     text.SetFillStyle(8000)
     ######### Add in Cut Values #############
-    text.AddText("Slope =  %.4f +- %.4f LinADC/fC [%.4f,%.4f]" % (fitLine.GetParameter(1), fitLine.GetParError(1),failureconds[shuntMult][0],failureconds[shuntMult][1]))
-    text.AddText("Offset =  %.2f +- %.2f LinADC [%.1f,.1f]" % (fitLine.GetParameter(0), fitLine.GetParError(0),failcondo[i_range][0],-1*failcondo[i_range][0]))
+    text.AddText("Slope =  %.4f +- %.4f LinADC/fC" % (fitLine.GetParameter(1), fitLine.GetParError(1)))
+    text.AddText("Offset =  %.2f +- %.2f LinADC" % (fitLine.GetParameter(0), fitLine.GetParError(0)))
     text.AddText("Chisquare = %e " % (fitLine.GetChisquare()))
     text.Draw("same")
 
