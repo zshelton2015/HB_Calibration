@@ -62,6 +62,8 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
     slopes =  []
     offsets =  []
     maxResiduals = []
+    maxCharges = []
+    minCharges = []
 #        pedestal = [0]*4
     linearizedGraphList =  []
 
@@ -100,6 +102,8 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
         else:                   
             fitLines.append([])
             maxResiduals.append([])
+            minCharges.append([])
+            maxCharges.append([])
 
 
 #       if pedestal==None:
@@ -200,6 +204,14 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
                     x.append(xVals[i])
                 maxResidual = max(absResidual, key=abs)
                 maxResiduals[-1].append(abs(maxResidual))
+
+                if N > 2:
+                    minCharges[-1].append(xVals[0])
+                    maxCharges[-1].append(xVals[N-1])
+                else:
+                    minCharges[-1].append(0)
+                    maxCharges[-1].append(0)
+                    
 
                                 
             if saveGraph:
@@ -326,8 +338,8 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
         ranges = range(4)
     else:
         ranges = range(2)  #change       
-    params = [[],[],[],[]]
-    unshunted_params = [[],[],[],[]]    
+    params = [[],[],[],[],[],[]]
+    unshunted_params = [[],[],[],[],[],[]]    
 
     for irange in ranges:
         if fitLines[irange]==None:
@@ -350,7 +362,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
             slope = fitLines[irange][icapID].GetParameter(1)
             uncertainty = fitLines[irange][icapID].GetParError(1)
 
-            params[irange].append([slope,offset,uncertainty,maxResiduals[irange][icapID]])
+            params[irange].append([slope,offset,uncertainty,maxResiduals[irange][icapID],minCharges[irange][icapID],maxCharges[irange][icapID]])
             if shuntMult==1:
                 unshunted_params[irange].append([slope,offset,uncertainty,maxResiduals[irange][icapID]])
                 
