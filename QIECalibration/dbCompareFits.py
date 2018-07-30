@@ -263,11 +263,15 @@ for uid in uidList:
         
         for r in xrange(4):
             if sh > 1 and r > 1: continue
-            maxslope[uid][sh][r] = max( max(slopes1[uid][sh][r]["max"],slopes2[uid][sh][r]["max"])*1.01, slopeMaxShunts[sh])
-            minslope[uid][sh][r] = min( min(slopes1[uid][sh][r]["min"],slopes2[uid][sh][r]["min"])*0.99, slopeMinShunts[sh])
-            maxoffset[uid][sh][r] = max( max(offsets1[uid][sh][r]["max"],offsets2[uid][sh][r]["max"])*1.01, offsetMaxRange[r])
-            minoffset[uid][sh][r] = min( min(offsets1[uid][sh][r]["min"],offsets2[uid][sh][r]["min"])*0.99, offsetMinRange[r])
-    
+            maxslope[uid][sh][r] = max( max(slopes1[uid][sh][r]["max"],slopes2[uid][sh][r]["max"])*1.03, slopeMaxShunts[sh])
+            minslope[uid][sh][r] = min( min(slopes1[uid][sh][r]["min"],slopes2[uid][sh][r]["min"])*0.97, slopeMinShunts[sh])
+            if r > 0:
+                maxoffset[uid][sh][r] = max( max(offsets1[uid][sh][r]["max"],offsets2[uid][sh][r]["max"])*1.03, offsetMaxRange[r])
+                minoffset[uid][sh][r] = min( min(offsets1[uid][sh][r]["min"],offsets2[uid][sh][r]["min"])*0.97, offsetMinRange[r])
+            else:
+                maxoffset[uid][sh][r] = max( max(offsets1[uid][sh][r]["max"],offsets2[uid][sh][r]["max"])*0.97, offsetMaxRange[r])
+                minoffset[uid][sh][r] = min( min(offsets1[uid][sh][r]["min"],offsets2[uid][sh][r]["min"])*1.03, offsetMinRange[r])
+                
             maxresSlope[uid][sh][r] = 0.03 
             minresSlope[uid][sh][r] = -0.03
             maxresOffset[uid][sh][r] = offsetMaxResRange[r] 

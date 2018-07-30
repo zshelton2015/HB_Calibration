@@ -139,7 +139,7 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
         serialNum = serialNum[1:]
     # Run QIE scan        
 
-    pointF = "full_hb_scan_test.txt"
+    pointF = "full_hb_scan_testScan.txt"
     if skipShunts:
         pointF = "noshunt_hb_scan_test.txt"
     if shortShunts:

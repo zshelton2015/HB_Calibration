@@ -351,7 +351,10 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
             linkNum = histoMap[ih]["Link"]
             #qieID = linkMap[linkNum]['unique_ID']
             qieID = histoMap[ih]["UniqueID"]
-            barcode = histoMap[ih]["Barcode"]
+            try:
+                barcode = histoMap[ih]["Barcode"]
+            except KeyError:
+                barcode = "-1"
             #barcode = 123456
             #print qieID
 

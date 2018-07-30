@@ -211,8 +211,12 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, date1=None, r
                 #Create Histograms for the Offsets
                     maxmin = cursor.execute("select max(offset),min(offset) from qieshuntparams where range=%i and shunt = %.1f and id = '%s';" % (r, sh,name)).fetchall()
                     maximum,minimum = maxmin[0]
-                    maximumo  = max(plotBoundaries_offset[r], maximum)
-                    minimumo  = min(-1*plotBoundaries_offset[r], minimum)
+                    if r==0:
+                        maximumo  = max(-0.25, maximum)
+                        minimumo  = min(-0.75, minimum)
+                    else:
+                        maximumo  = max(plotBoundaries_offset[r], maximum)
+                        minimumo  = min(-1*plotBoundaries_offset[r], minimum)
                     test = []
                     c[-1].cd(2)
                     histoffset.append(TH1D("OFFSET_Sh_%s_R_%i" %(str(sh).replace(".",""),r),"%s Shunt %.1f - Range %d" %(name, sh, r), 41, minimumo, maximumo))

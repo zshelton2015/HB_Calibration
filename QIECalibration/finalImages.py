@@ -103,10 +103,16 @@ def finalImages(dirName=""):
                     if sumDir.GetListOfKeys().Contains("OFFSET_Sh_%s_R_%d"%(str(sh).replace(".",""),ra)):
                         hist = sumDir.Get("OFFSET_Sh_%s_R_%d"%(str(sh).replace(".",""),ra))
                         hist.Draw()
-                        holine.DrawLine(failcondo[ra][0],0,failcondo[ra][0],hist.GetMaximum()+1)
-                        holine.Draw("same")
-                        loline.DrawLine(-failcondo[ra][0],0,-failcondo[ra][0],hist.GetMaximum()+1)
-                        loline.Draw("same")
+                        if ra==0:
+                            holine.DrawLine(-0.55,0,-0.55,hist.GetMaximum()+1)
+                            holine.Draw("same")
+                            loline.DrawLine(-0.45,0,-0.45,hist.GetMaximum()+1)
+                            loline.Draw("same")
+                        else:
+                            holine.DrawLine(failcondo[ra][0],0,failcondo[ra][0],hist.GetMaximum()+1)
+                            holine.Draw("same")
+                            loline.DrawLine(-failcondo[ra][0],0,-failcondo[ra][0],hist.GetMaximum()+1)
+                            loline.Draw("same")
                 canv.SaveAs(os.path.join(outDir,"%s_Shunt_%s_%s.png"%(shToGsel[sh],str(sh).replace(".",""),uid)))
             canv.Close()                
         rootfile.Close()

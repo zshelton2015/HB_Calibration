@@ -84,7 +84,7 @@ import RedoFit_linearized_2d
 sys.stdout = originalSTDOUT
 print "%s, Finished Scan"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 print "%s, Starting Fits"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-RedoFit_linearized_2d.QIECalibrationFit(_Directory=runDir, _saveGraphs = True, logOutput = True)
+RedoFit_linearized_2d.QIECalibrationFit(_Directory=runDir, _saveGraphs = False, logOutput = True)
 
 import SummaryPlot
 

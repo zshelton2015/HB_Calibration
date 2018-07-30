@@ -29,9 +29,14 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=Fals
 
 
     gName = "LinADCvsfC_%s_range_%s_shunt_%s_capID_%s_linearized"%(qieNumber,i_range,str("%.1f"%shuntMult).replace(".","_"),i_capID)
+    print rootFile
+    print rootFile.GetName()
+    print tGraphDir
+
+    print gName
 
     graph = tGraphDir.Get(gName)
-
+    print graph
     fitLine = fitLineDir.Get("fit_%s"%gName)
 
     qieInfo = ""

@@ -82,6 +82,7 @@ def histoRun(outF, outputPipe=sys.stdout, uHTR = 1, timeout = 10):
 def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     origSTDOUT = sys.stdout
     runDir = tmpDir.split('.tmp')[0]
+    print "Using run directory %s"%runDir
     stdOutDump = open("%smapLinksOutput.stdout" % ((runDir + "/") if runDir is not '' else ''), 'w')
     sys.stdout = stdOutDump
     
@@ -301,7 +302,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
         f = TFile.Open("%s/QIslotToQIEcard/QIslot_%d.root" % (tmpDir, QIslot))
         for h in xrange(0,192,8):
             hist = f.Get("h%d" % h)
-            if hist.GetMean() > 50 and hist.GetRMS() < 2 and hist.Integral() > 100:
+            if hist.GetMean() > 200 and hist.GetRMS() < 2 and hist.Integral() > 10000:
                 # Found QIE card
                 if h not in histoMap.keys():
                     print "Could not find h%d in the map. Check uHTR link step!" % h
@@ -347,7 +348,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
         f = TFile.Open("%s/QIchannelTOQIEchannel/QIchannel_%d.root" % (tmpDir, QIchannel))
         for h in xrange(0,192):
             hist = f.Get("h%d" % h)
-            if hist.GetMean() > 50 and hist.GetRMS() < 2 and hist.Integral() > 100:
+            if hist.GetMean() > 200 and hist.GetRMS() < 2 and hist.Integral() > 10000:
                 # Found QIE channel
                 histoMap[h]["QIchannel"] = QIchannel
                 histoMap[h]["QIE"] = h % 8 + 8 * (1 if histoMap[h]["Igloo"] == "Bot" else 0) + 1 
@@ -386,6 +387,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 problemSlots.append( (rm,slot) )
 
     if len(problemSlots) > 0:
+        pprint(histoMap)
         sys.stdout = origSTDOUT
         for rm,slot in problemSlots:
             print "Error mapping card in RM %d Slot %d, check connections on this slot" % (rm,slot)
