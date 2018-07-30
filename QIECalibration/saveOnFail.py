@@ -29,14 +29,14 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=Fals
 
 
     gName = "LinADCvsfC_%s_range_%s_shunt_%s_capID_%s_linearized"%(qieNumber,i_range,str("%.1f"%shuntMult).replace(".","_"),i_capID)
-    print rootFile
-    print rootFile.GetName()
-    print tGraphDir
+    #print rootFile
+    #print rootFile.GetName()
+    #print tGraphDir
 
-    print gName
+    #print gName
 
     graph = tGraphDir.Get(gName)
-    print graph
+    #print graph
     fitLine = fitLineDir.Get("fit_%s"%gName)
 
     qieInfo = ""
@@ -124,6 +124,9 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=Fals
     p1.SetRightMargin(0)
     p2.SetTopMargin(0)
     p2.SetBottomMargin(0.3)
+    minEl = TMath.MinElement(graph.GetN(),graph.GetX())
+    maxEl = TMath.MaxElement(graph.GetN(),graph.GetX())
+    graph.GetXaxis().SetRangeUser(min(xRange[i_range][shuntMult]['min'],minEl),max(xRange[i_range][shuntMult]['max'],maxEl))
     graph.Draw("ap")
     fitLine.SetLineColor(kRed)
     fitLine.SetLineWidth(1)
