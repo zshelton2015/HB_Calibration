@@ -247,6 +247,9 @@ def saveOnFail(inputDir):
         for failModeFit in jsonFile['Comments']['Poor fit']:
             if failModeFit not in failModeList:
                 failModeList.append(failModeFit)
+        for failModeRange in jsonFile['Comments']['Range Failures']:
+            if failModeRange not in failModeList:
+                failModeList.append(failModeRange)
 
         qieList = [x[2] for x in failModeList]
         qieCounter = Counter(qieList)
