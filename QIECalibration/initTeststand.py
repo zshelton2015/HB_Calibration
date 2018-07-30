@@ -6,6 +6,10 @@ from textwrap import dedent
 def initLinks(uHTRslot = 3,readDelay=192):
 
     initCommands = dedent("""\
+                   clock
+                   setup                  
+                   3
+                   quit
                    link
                    init
                    %i

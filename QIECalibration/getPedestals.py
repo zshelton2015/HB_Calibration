@@ -51,7 +51,6 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
             #remove lower and upper ends of ADC to make it clean
 #            graph = CleanGraph(graphs_shunt[1.0][ih][i_capID],0)
             graph = graphs_shunt[1.0][ih][i_capID]
-            graph = graphs_shunt[1.0][ih][i_capID]
             f1= TF1("f1","pol1",200,600);
 
             #print "pedestalFit"

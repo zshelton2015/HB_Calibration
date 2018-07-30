@@ -9,7 +9,8 @@ from ast import literal_eval
 import sys
 import subprocess
 from DAC import setDAC_multi
-
+from pprint import pprint
+from sendCommands import send_commands
 
 def qieScan(outDir, linkMask = 0, serialNum = 1, uHTR = 1, pointF = "full_hb_scan_test.txt"):
 
@@ -53,9 +54,8 @@ def qieScan(outDir, linkMask = 0, serialNum = 1, uHTR = 1, pointF = "full_hb_sca
 
     print setDAC_multi(0,quiet=True)
 
-
     sys.stdout = originalSTDOUT
-
+    return stdOutDump
 
 def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False, saveGraphs=False, skipShunts = False, shortShunts = False, fineScan = False):
 
@@ -83,7 +83,6 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
     #print "RBX =", RBX
     #print "uHTR =", uHTR
     #print "QI_SlotToBoard = %s\n" % QI_SlotToBoard
-
     today = datetime.now().strftime("%m-%d-%Y")
 
     # Will create directory if it doesn't exist, nothing otherwise
@@ -97,6 +96,17 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
     # Create run directory
     runDir = "%s/Run_%d/" % (dataDir, run)
     system("mkdir -p %s" % runDir)
+    
+    # Test that server is still alive
+    try:
+        serverCheck = send_commands(cmds = ["get %s-4-1-UniqueID" % RBX])
+        if len(serverCheck) == 0 or serverCheck[0]["result"].find("0x") < 0 or serverCheck[0]["result"].find("connection failed") >= 0:
+            raise StandardError 
+    except StandardError:
+        # Server crashed. Abort
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print "%s, Unable to communicate with ngccm server. Restart server and redo calibration scan." % timestamp
+        return ""
     
     print "%s, Running Mapping Script"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print "       If this takes longer than 5 minutes, the uHTR is likely stuck and needs to be reset"
@@ -129,7 +139,7 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
         serialNum = serialNum[1:]
     # Run QIE scan        
 
-    pointF = "full_hb_scan_test.txt"
+    pointF = "full_hb_scan_testScan.txt"
     if skipShunts:
         pointF = "noshunt_hb_scan_test.txt"
     if shortShunts:
@@ -140,10 +150,23 @@ def QIECalibration(topDir = "data", cardLayout = "cardLayout.txt", doFit = False
     print "%s, Starting Calibration Scan"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print "       This will take approximately 20-30 minutes"
 
-    qieScan(outDir = runDir, linkMask = linkMask, serialNum = serialNum, uHTR = uHTR, pointF = pointF)
-
+    stdOutDump = qieScan(outDir = runDir, linkMask = linkMask, serialNum = serialNum, uHTR = uHTR, pointF = pointF)
+    
+    # Test that server is still alive
+    try:
+        serverCheck = send_commands(cmds = ["get %s-4-1-UniqueID" % RBX])
+        if len(serverCheck) == 0 or serverCheck[0]["result"].find("0x") < 0 or serverCheck[0]["result"].find("connection failed") >= 0:
+            raise StandardError 
+    except StandardError:
+        # Server crashed. Abort
+        sys.stdout = stdOutDump
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print "%s, Unable to communicate with ngccm server. Restart server and redo calibration scan." % timestamp
+        sys.stdout = originalSTDOUT
+        print "%s, Unable to communicate with ngccm server. Restart server and redo calibration scan." % timestamp
+        return ""
+    
     sys.stdout = originalSTDOUT
-
     # Compute fits
     if doFit:
         print "%s, Staring Fit"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')

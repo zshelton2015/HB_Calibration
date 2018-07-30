@@ -69,7 +69,10 @@ def send_commands(cmds=cmds_default, script=False, raw=False, progbar=False, por
                     if progbar:
                         progress(i, len(cmds), cmds[i] if cmds[i] == "wait" else cmds[i].split()[1])
                     t0 = time()
-                    p.expect("{0}\s?#((\s|E)[^\r^\n]*)".format(escape(c)))
+                    try:
+                        p.expect("{0}\s?#((\s|E)[^\r^\n]*)".format(escape(c)))
+                    except pexpect.TIMEOUT:
+                        return []
                     t1 = time()
 #                   print [p.match.group(0)]
                     output.append({

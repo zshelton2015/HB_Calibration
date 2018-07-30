@@ -125,9 +125,10 @@ def makeADCvsfCgraphSepCapID(values,mean, rms, charge,histo_list = range(0,196),
         _charge = array("d",charge[i_range][ih][:-1])
         _chargeErr = array("d",[0 for i in range(len(charge[i_range][ih][:-1]))])
         graphs[ih] = [] 
-        #print len(mean[1][14][1]),len(charge[1][14][:-1])
+
         for i_capID in range(4):    
-            #print "the hist is :", ih  
+            # print "the hist is :", ih , i_range , i_capID
+            # print mean[i_range][ih][i_capID]
             ADCvsfC=(TGraphErrors(len(mean[i_range][ih][i_capID]),_charge,mean[i_range][ih][i_capID],_chargeErr,rms[i_range][ih][i_capID]))
             ADCvsfC.SetNameTitle("LinADCvsfC_%i_range_%i_shunt_%s_capID_%i"%(channel,i_range, ("%.1f"%shuntMult).replace(".","_"),i_capID),"LinADCvsfC_%i_range_%i_shunt_%.1f_capID_%i"%(channel,i_range,float(shuntMult),i_capID))
 

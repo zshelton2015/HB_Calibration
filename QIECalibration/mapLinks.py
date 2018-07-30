@@ -15,6 +15,7 @@ from ast import literal_eval    # Safe eval
 from ROOT import *
 from threading import Timer
 import json
+from datetime import datetime
 
 # 0x : value must start with literal '0x'
 # [A-Fa-f0-0] : only values of A-F, a-f, or 0-9 allowed
@@ -68,7 +69,12 @@ def histoRun(outF, outputPipe=sys.stdout, uHTR = 1, timeout = 10):
 
     #popen("uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (uHTR*4)).read()
     #return os.system("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4))
-    return call("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True, stdout=outputPipe, stderr=outputPipe)
+    print "Taking histo run - %s" % datetime.now().strftime("%b %d %Y  %H:%M:%S")
+    sys.stdout.flush()
+    retCode = call("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True, stdout=outputPipe, stderr=outputPipe)
+    sleep(2.0)
+    return retCode
+    
     #return ("timeout %d uHTRtool.exe 192.168.41.%d < uHTRcommands.txt" % (timeout, uHTR*4), shell=True)
     #print "DONE HERE"
     
@@ -76,6 +82,7 @@ def histoRun(outF, outputPipe=sys.stdout, uHTR = 1, timeout = 10):
 def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     origSTDOUT = sys.stdout
     runDir = tmpDir.split('.tmp')[0]
+    print "Using run directory %s"%runDir
     stdOutDump = open("%smapLinksOutput.stdout" % ((runDir + "/") if runDir is not '' else ''), 'w')
     sys.stdout = stdOutDump
     
@@ -133,6 +140,17 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                               "get %s-%d-QIE[%d-%d]_FixRange" % (RBX, rm, (slot-1)*16 + 1, slot*16), \
                               "get %s-%d-QIE[%d-%d]_RangeSet" % (RBX, rm, (slot-1)*16 + 1, slot*16)]
             ngccm_output = send_commands(cmds = iglooRangeCmds)
+            if len(ngccm_output) == 0:
+                # Server timeout. Try again
+                ngccm_output = send_commands(cmds = iglooRangeCmds)
+                if len(ngccm_output) == 0:
+                    # Fail
+                    print "ngccm server timout"
+                    sys.stdout = origSTDOUT
+                    print "ngccm server timout"
+                    sys.stdout = stdOutDump
+                    return {}
+                
             if ngccm_output[0]["result"].find("ERROR") >= 0:
                 # Card not found, continue
                 print "Card not found in rm %d slot %d!" % (rm,slot)
@@ -193,7 +211,18 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
     # Turn off fixed range mode and set all to range 0
     fixRangeCmds = ["put %s-[1-4]-QIE[1-64]_FixRange 256*0" % RBX, \
                     "put %s-[1-4]-QIE[1-64]_RangeSet 256*0" % RBX]
-    send_commands(cmds = fixRangeCmds)
+    fixRangeOutput = send_commands(cmds = fixRangeCmds)
+
+    if len(fixRangeOutput) == 0:
+        # Server timeout. Try again
+        fixRangeOutput = send_commands(cmds = fixRangeCmds)
+        if len(fixRangeOutput) == 0:
+            # Fail
+            print "ngccm server timout"
+            sys.stdout = origSTDOUT
+            print "ngccm server timout"
+            sys.stdout = stdOutDump
+            return {}
 
     if len(uidlist) == 0:
         # No cards found. Exiting!
@@ -205,7 +234,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
         sys.stdout = origSTDOUT
         print "No cards found! Check that the ngccm server is running and ensure all cards are cabled correctly."
         sys.stdout = stdOutDump
-        
+        setDAC_multi(0) 
         return {}
 
 
@@ -228,6 +257,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 print "Card in RM %d Slot %d has incorrectly mapped igloos: %d Top  %d Bot" % (vals["RM"], vals["Slot"], vals["Top"]/8, vals["Bot"]/8)
                 sys.stdout = stdOutDump
         
+        setDAC_multi(0) 
         return {}
 
 
@@ -272,7 +302,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
         f = TFile.Open("%s/QIslotToQIEcard/QIslot_%d.root" % (tmpDir, QIslot))
         for h in xrange(0,192,8):
             hist = f.Get("h%d" % h)
-            if hist.GetMean() > 50 and hist.GetRMS() < 2 and hist.Integral() > 100:
+            if hist.GetMean() > 200 and hist.GetRMS() < 2 and hist.Integral() > 10000:
                 # Found QIE card
                 if h not in histoMap.keys():
                     print "Could not find h%d in the map. Check uHTR link step!" % h
@@ -311,13 +341,14 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
             sys.stdout = origSTDOUT
             print "Unable to complete histo run for mapping step 3. Check uHTR %d" % uHTR
             sys.stdout = stdOutDump
+            setDAC_multi(0) 
             return {}
 
         # Parse histo run
         f = TFile.Open("%s/QIchannelTOQIEchannel/QIchannel_%d.root" % (tmpDir, QIchannel))
         for h in xrange(0,192):
             hist = f.Get("h%d" % h)
-            if hist.GetMean() > 50 and hist.GetRMS() < 2 and hist.Integral() > 100:
+            if hist.GetMean() > 200 and hist.GetRMS() < 2 and hist.Integral() > 10000:
                 # Found QIE channel
                 histoMap[h]["QIchannel"] = QIchannel
                 histoMap[h]["QIE"] = h % 8 + 8 * (1 if histoMap[h]["Igloo"] == "Bot" else 0) + 1 
@@ -356,6 +387,7 @@ def mapLinks(outF = "", configFile = "cardLayout.txt", tmpDir = ".tmpMap"):
                 problemSlots.append( (rm,slot) )
 
     if len(problemSlots) > 0:
+        pprint(histoMap)
         sys.stdout = origSTDOUT
         for rm,slot in problemSlots:
             print "Error mapping card in RM %d Slot %d, check connections on this slot" % (rm,slot)
