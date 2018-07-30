@@ -89,14 +89,12 @@ RedoFit_linearized_2d.QIECalibrationFit(_Directory=runDir, _saveGraphs = False, 
 import SummaryPlot
 
 runInfo = runDir.split("/")
-
-runDate = runInfo[1]
-runNumber = int(runInfo[2].split("_")[1])
-
+runNum= runDir[runDir.index("_"):-2]
+runDate = runDir[runDir.index("0"):-5]
 sys.stdout = originalSTDOUT
 
 print "%s, Starting Summary Plots"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-SummaryPlot.SummaryPlot(runAll = True, date1=[runDate], run1=[runNumber], shFac=True, images=True, tester1 = tester, logoutput = True)
+SummaryPlot.SummaryPlot(runAll = True, idir =runDir, shFac=True, images=True, tester1 = tester, logoutput = True)
 print "%s, Final Merge Beginning"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 #Final Merge Goes Here
 from finalImages import finalImages
