@@ -46,24 +46,25 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
         _file.cd("h%i"%ih)
         #print ih
         
-        #lowCurrentPeds = []
-        for i_capID in range(4):
-            #remove lower and upper ends of ADC to make it clean
-#            graph = CleanGraph(graphs_shunt[1.0][ih][i_capID],0)
-            graph = graphs_shunt[1.0][ih][i_capID]
-            f1= TF1("f1","pol1",200,600);
+#         #lowCurrentPeds = []
+#         for i_capID in range(4):
+#             #remove lower and upper ends of ADC to make it clean
+# #            graph = CleanGraph(graphs_shunt[1.0][ih][i_capID],0)
+#             graph = graphs_shunt[1.0][ih][i_capID]
+#             #f1= TF1("f1","pol1",200,600);
+#             f1= TF1("f1","pol1",150,600);
 
-            #print "pedestalFit"
-            #print graph
-            #print graph.GetN()
-            if not verbose:
-                graph.Fit("f1","R0Q")
-            else:
-                graph.Fit("f1","R0")
-            line = graph.GetFunction("f1")
-            graph.Write()
-            #pedestal is the x-intercept of the graph (-offset/slope)
-            #lowCurrentPeds.append(-1*(line.GetParameter(0)-bin0startLevel)/line.GetParameter(1))
+#             #print "pedestalFit"
+#             #print graph
+#             #print graph.GetN()
+#             if not verbose:
+#                 graph.Fit("f1","R0Q")
+#             else:
+#                 graph.Fit("f1","R0")
+#             line = graph.GetFunction("f1")
+#             graph.Write()
+#             #pedestal is the x-intercept of the graph (-offset/slope)
+#             #lowCurrentPeds.append(-1*(line.GetParameter(0)-bin0startLevel)/line.GetParameter(1))
 
 
         #get high current peds
@@ -87,6 +88,7 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
                 else:    
                     graph.Fit("pol1","0")
                 line = graph.GetFunction("pol1")
+                print i_shunt, i_capID, line.GetParameter(0), line.GetParameter(1)
                 graph.Write()
                 if not line.GetParameter(1)==0.:
                     highCurrentShuntPeds[i_shunt].append(-1*(line.GetParameter(0)-bin0startLevel)/line.GetParameter(1))                    
@@ -145,7 +147,7 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
                             }
 
 
-        
+    _file.cd()
     for i_shunt in shuntMult_list:
         pedHists[i_shunt].Write()
     _file.Close()

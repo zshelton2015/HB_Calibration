@@ -21,18 +21,6 @@ except NameError:
 graphOffset = [100,500,3000,8000]
 saveResiduals = True
 
-startVal = [[3.2,-15],
-            [3.2,-20],
-            [3.2,-20],
-            [3.2,-20]]
-
-
-Varlimits = [[[2.5,4.0],[-50,100]],
-             [[2.5,4.0],[-50,1000]],
-             [[2.5,4.0],[-500,1000]],
-             [[2.5,4.0],[-5000,10000]]]
-
-
 
 lineColors = [kRed, kBlue, kGreen+2, kCyan] 
 shunt_Val ={1:0,
@@ -93,8 +81,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
         #######################################################
         pedestal = pedestalVals["shunts"][shuntMult]
 
-
-        vOffset = i_range*64
+#        vOffset = i_range*64
         graphs = graphList[i_range]
         if graphs==None: 
             fitLines.append(None)
@@ -126,7 +113,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
             maxCharge = -9e9
             minCharge = 9e9
             for p in points:
-                x = graph.GetX()[p]-vOffset
+#                x = graph.GetX()[p]-vOffset
                 # nominalgraph.GetX()[p] -= pedestal[i_capID]
                 graph.GetX()[p] -= pedestal[i_capID]
 
@@ -146,7 +133,7 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
             if graph.GetN() > 1:
                 if verbose:
                     print "TOTAL:",graph.GetN()
-                f1= TF1("f1","pol1",200,600);
+#                f1= TF1("f1","pol1",200,600);
 #               f1.FixParameter(0,-0.5)
                 #if (i_range==0 and shuntMult==1):
                 #    graph.Fit("f1","R0") 
@@ -165,6 +152,10 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
                 fitLine =  graph.GetFunction("pol1")
                 fitLine.SetNameTitle("fit_%s"%graph.GetName(),"fit_%s"%graph.GetName())
                 fitLines[-1].append(fitLine)
+                # if qieNumber==10:
+                #     N = graph.GetN()                
+                #     print qieNumber, i_range, i_capID, graph.GetN(), graph.GetX()[0], graph.GetX()[int(N/2)], graph.GetX()[N-1], pedestal[i_capID]
+                #     print "\t",fitLine.GetParameter(0), fitLine.GetParameter(1) 
             else:
                 linearizedGraphList.append(graph)
                 fitLine = TF1("fit_%s"%graph.GetName(),"pol1",-999,999)

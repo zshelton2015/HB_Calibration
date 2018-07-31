@@ -268,7 +268,6 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
         shuntOutputDirectory = outputDirectory #+ "Data_%s_%s/"%(rangeMode, shuntMode)
         vals, meanvals, rmsvals, charge = ShuntScan(shuntMult=shuntMult, outputDirectory=outputDirectory, histoMap=histoMap, histoList=histoList)
 
-
         pedestal_graphs_shunt[shuntMult] = makeADCvsfCgraphSepCapID(vals[0],meanvals, rmsvals, charge, histoList,qieRange=0,shuntMult=shuntMult)
 
 
@@ -283,18 +282,18 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
     #print dirStructure
     #print date
     #print run
-    #_filePeds = TFile.Open("%sPedestalPlots/pedestalMeasurement_%s_%s.root"%(outputDirectory,date, run),"recreate")
-    #_filePeds.Close()
+    _filePeds = TFile.Open("%sPedestalPlots/pedestalMeasurement_%s_%s.root"%(outputDirectory,date, run),"recreate")
+    _filePeds.Close()
     print "Now Get Pedestals"
     pickle.dump(pedestal_graphs_shunt, open("debug.p", "wb"))
     pedestalVals = getPedestals(pedestal_graphs_shunt,shuntMult_list,histoList,outputDirectory, date, run)
 
-    #print "-"*20
-    #print "-"*20
-    #print "PedestalValues"
-    #print pedestalVals
-    #print "-"*20
-    #print "-"*20
+    # print "-"*20
+    # print "-"*20
+    # print "PedestalValues"
+    # print pedestalVals
+    # print "-"*20
+    # print "-"*20
 
     unshunted_params={}
     shuntFactors={}
