@@ -538,7 +538,7 @@ def slopeFailH(sh, r, name,slope,thshunt = .3,pct = .1):
 def XrangeFail(sh, r,xmin,xmax):
     from selectionCuts import *
     failure = False
-    if xmin<xRange[r][sh]['min'] or xmax > xRange[r][sh]['max']:
+    if xmin<chargeRange[r][sh]['min'] or xmax > chargeRange[r][sh]['max']:
         failure = True
     return failure
 
