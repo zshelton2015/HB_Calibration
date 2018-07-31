@@ -64,7 +64,7 @@ runNumber = int(runInfo[2].split("_")[1])
 sys.stdout = originalSTDOUT
 
 print "%s, Starting Summary Plots"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-SummaryPlot.SummaryPlot(runAll = True, date1=[runDate], run1=[runNumber], shFac=True, images=True, tester1 = tester, logoutput = True)
+SummaryPlot.SummaryPlot(runAll = True,idir = runDir, shFac=True, images=True, tester1 = tester, logoutput = True)
 print "%s, Final Merge Beginning"%datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 #Final Merge Goes Here
