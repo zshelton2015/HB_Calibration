@@ -126,7 +126,7 @@ def saveTGraph(rootFile,shuntMult,i_range,qieNumber,i_capID,maxResi,verbose=Fals
     p2.SetBottomMargin(0.3)
     minEl = TMath.MinElement(graph.GetN(),graph.GetX())
     maxEl = TMath.MaxElement(graph.GetN(),graph.GetX())
-    graph.GetXaxis().SetRangeUser(min(xRange[i_range][shuntMult]['min'],minEl),max(xRange[i_range][shuntMult]['max'],maxEl))
+    graph.GetXaxis().SetRangeUser(min(chargeRange[i_range][shuntMult]['min'],minEl),max(chargeRange[i_range][shuntMult]['max'],maxEl))
     graph.Draw("ap")
     fitLine.SetLineColor(kRed)
     fitLine.SetLineWidth(1)

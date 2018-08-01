@@ -84,9 +84,9 @@ def getPedestals(graphs_shunt, shuntMult_list, histoList,dirName, date, run, ver
             #       graph.Draw("ap")
             #       c2.SaveAs("trial_2.pdf")        
                 if not verbose:
-                    graph.Fit("pol1","0QMFE")
+                    graph.Fit("pol1","0QF")
                 else:    
-                    graph.Fit("pol1","0MFE")
+                    graph.Fit("pol1","0F")
                 line = graph.GetFunction("pol1")
                 print i_shunt, i_capID, line.GetParameter(0), line.GetParameter(1)
                 graph.Write()

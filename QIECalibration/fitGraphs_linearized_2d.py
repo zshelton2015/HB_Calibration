@@ -140,9 +140,10 @@ def doFit_combined(graphList, saveGraph = False, qieNumber = 0, qieBarcode = "",
                 #else:
                 #    graph.Fit("pol1","0") 
                 if not verbose:
-                    graph.Fit("pol1","0QMFE")               
+                    graph.Fit("pol1","0QF")               
                 else: 
-                    graph.Fit("pol1","0MFE")               
+                    graph.Fit("pol1","0F")
+                    
                 linearizedGraphList.append(graph) 
                 
                 #if (i_range==0 and shuntMult==1):

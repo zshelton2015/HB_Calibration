@@ -142,9 +142,12 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
 
     if logOutput:
         originalSTDOUT = sys.stdout
+        originalSTDERR = sys.stderr
 
         stdOutDump = open("%s/calibrationFitOutput.stdout"%outputDirectory, 'w')
+        stdErrDump = open("%s/calibrationFitError.stderr"%outputDirectory, 'w')
         sys.stdout = stdOutDump
+        sys.stderr = stdErrDump
 
     # print "the root file is %s"%rootfile
     print "Reading from directory %s"%outputDirectory
@@ -282,6 +285,7 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
     #print dirStructure
     #print date
     #print run
+    os.system("mkdir -p %sPedestalPlots" % outputDirectory)
     _filePeds = TFile.Open("%sPedestalPlots/pedestalMeasurement_%s_%s.root"%(outputDirectory,date, run),"recreate")
     _filePeds.Close()
     print "Now Get Pedestals"
@@ -424,7 +428,7 @@ def QIECalibrationFit(_Directory, _histoList='-1', _shuntList='-1', _saveGraphs=
 
     if logOutput:
         sys.stdout = originalSTDOUT
-
+        sys.stderr = originalSTDERR
 
 
 if __name__ == "__main__":
@@ -443,6 +447,7 @@ if __name__ == "__main__":
     #                   help="Skip the TDC scans")
     # parser.add_option("--SkipShunt", action="store_false",dest="RunShunt",default=True,
     #                   help="Skip the Shunt Scans")
+    parser.add_option("--logOutput", dest="logOutput", action="store_true") 
     parser.add_option("--shuntList", dest="shuntList",default="-1",type="str",
                       help="List of shunts to run on, default is -1, which will run all the shunts")
     parser.add_option("-d","--dir", dest="Directory",default="",type="str",

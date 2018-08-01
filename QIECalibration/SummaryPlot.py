@@ -58,19 +58,46 @@ THRESHOLD = .15
 
 from ROOT import *
 #def SummaryPlot(options):
-def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = "", hist2D=False, shFac=False, adapterTest=False,images=False, verbose=False, slVqie=False, tester1 = "Shelton",logoutput=False):
+def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = None, hist2D=False, shFac=False, adapterTest=False,images=False, verbose=False, slVqie=False, tester1 = "Shelton",logoutput=False):
     # Get required arguments from options
     tester = tester1
-    indir = idir[0]
-    date = indir[5:15]
-    run = indir[-1]
+    indir = idir
+#if idir == str:
+#        indir = idir
+#   else:
+#        indir = idir[0]
 
-    if indir == None:
-        print "invalid indirectory"
+    # if indir[-1] != "/":
+    #     indir += "/"
+    # date = indir[5:15]
+    # run = indir[-1]
+    # print indir
+    # if indir == None:
+    #     print "invalid indirectory"
+    #     exit
+    # if indir[-1] != "/":
+    #     indir+="/"
+    # run = indir[20:-2]
+
+    if not '/' in indir:
+        print "invalid directory structure, date and run number information expected"
         exit
-    if indir[-1] != "/":
-        indir+="/"
-    run = indir[20:-2]
+
+    dirInfo = indir.split("/")
+    hasRun = False
+    hasDate = False
+    for value in dirInfo:
+        if '2018' in value:
+            date = value
+            hasDate = True
+        if "Run_" in value:
+            run = int(value[4:])
+            hasRun = True
+
+    if not hasRun or not hasDate:
+        print "invalid directory structure, date and run number information expected"
+        exit        
+
     if type(tester) == type([]):
         tester = tester[0]
         if tester in people:
@@ -128,8 +155,8 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = "", hi
         for f in dbnames:
             files.append(glob.glob("%s/%s"%(indir,f))[0])
     print files
-    MergeDatabases(files, indir,"MergedDatabaseRun%s.db"%run)
-    xyz1234 = sqlite3.connect("%sMergedDatabaseRun%s.db"%(indir,run))
+    MergeDatabases(files, indir,"MergedDatabaseRun%i.db"%run)
+    xyz1234 = sqlite3.connect("%sMergedDatabaseRun%i.db"%(indir,run))
     cursor = xyz1234.cursor()
     TGaxis.SetMaxDigits(3)
     #files = cursor.excute("Select distinct runDirectory from qieshuntparams").Fetchall()
@@ -508,7 +535,7 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = "", hi
                 c[-1].Update()
                 #c[-1].SaveAs("data/%s/Run_%s/SummaryPlots/ImagesOutput/CARD_%s_SHUNT_%s_RANGE_%i.png"%(date, run, name, str(sh).replace(".",""), r))
                 if(images):
-                    c[-1].Print("data/%s/Run_%s/SummaryPlots/TotalOutput/Total_SHUNT_%s_RANGE_%i.png"%(date, run, str(sh).replace(".",""), r))
+                    c[-1].Print("%s/SummaryPlots/TotalOutput/Total_SHUNT_%s_RANGE_%i.png"%(indir, str(sh).replace(".",""), r))
                 c[-1].Write()
                 if(hist2D):
                     histSlopeNvSlope1[-1].Write()

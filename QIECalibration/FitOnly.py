@@ -44,10 +44,15 @@ if not options.tester in people:
 tester = people[options.tester]
         
 
-
 originalSTDOUT = sys.stdout
 
 runDir = options.directory
+runInfo = runDir.split("/")
+# print runDir
+
+runDate = runInfo[1]
+runNumber = int(runInfo[2].split("_")[1])
+
 
 import RedoFit_linearized_2d
 
@@ -56,10 +61,6 @@ RedoFit_linearized_2d.QIECalibrationFit(_Directory=runDir, _saveGraphs = True, l
 
 import SummaryPlot
 
-runInfo = runDir.split("/")
-
-runDate = runInfo[1]
-runNumber = int(runInfo[2].split("_")[1])
 
 sys.stdout = originalSTDOUT
 
