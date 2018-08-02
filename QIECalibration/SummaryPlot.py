@@ -59,30 +59,14 @@ THRESHOLD = .15
 from ROOT import *
 #def SummaryPlot(options):
 def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = None, hist2D=False, shFac=False, adapterTest=False,images=False, verbose=False, slVqie=False, tester1 = "Shelton",logoutput=False):
-    # Get required arguments from options
+    # Get required arguments from options, converting them to values for the function
     tester = tester1
     indir = idir
-#if idir == str:
-#        indir = idir
-#   else:
-#        indir = idir[0]
-
-    # if indir[-1] != "/":
-    #     indir += "/"
-    # date = indir[5:15]
-    # run = indir[-1]
-    # print indir
-    # if indir == None:
-    #     print "invalid indirectory"
-    #     exit
-    # if indir[-1] != "/":
-    #     indir+="/"
-    # run = indir[20:-2]
-
+    # Add the "/" to the end of the indir string if not already there
     if not '/' in indir:
         print "invalid directory structure, date and run number information expected"
         exit
-
+    # Gathers Date, and Run number from the indir string
     dirInfo = indir.split("/")
     hasRun = False
     hasDate = False
@@ -93,11 +77,11 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = None, 
         if "Run_" in value:
             run = int(value[4:])
             hasRun = True
-
+    # Confirms directory is correct
     if not hasRun or not hasDate:
         print "invalid directory structure, date and run number information expected"
-        exit        
-
+        exit
+    # Confirms tester name is a part of dictionary above
     if type(tester) == type([]):
         tester = tester[0]
         if tester in people:
@@ -111,18 +95,16 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = None, 
             print "Tester not in list of testers"
     else:
         print "Tester type error"
-
+    # Allows root to modify visual options for all canvases
     gROOT.SetBatch(True)
-
+    # Number of QIEs in the QIE11
     qieList = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
-    #Canvases
-
+    #Canvases lists
     c = []
     c2 = []
 
     #Histogram Lists
-
     histoffset = []
     histshunt = []
     histslopes = []
@@ -130,15 +112,13 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = None, 
     histShuntFactor = []
     histSlvQie = []
 
-    #Total Histograms
-
+    #Total Histograms list
     totalhist = []
 
-    #Max - min Variables
+    #Max - min Variables declaration
     maximum = 0
     minimum = 0
-
-    #Failure
+    #Failure lists and conditions
     failure = False
     Result = True
     FailedCards = []
@@ -155,18 +135,22 @@ def SummaryPlot(runAll=False, dbnames=None, uid=None, total=False, idir = None, 
         for f in dbnames:
             files.append(glob.glob("%s/%s"%(indir,f))[0])
     print files
+    # Merge .db files to condense analysis to a single SQLITE file instead of up to 8.
     MergeDatabases(files, indir,"MergedDatabaseRun%i.db"%run)
+    # Connect with database
     xyz1234 = sqlite3.connect("%sMergedDatabaseRun%i.db"%(indir,run))
     cursor = xyz1234.cursor()
+    # Set digit limit on histogram
     TGaxis.SetMaxDigits(3)
-    #files = cursor.excute("Select distinct runDirectory from qieshuntparams").Fetchall()
+
+    # THESE GET FETCHALL LIST ARE NECESSARY FOR EACH RUN!
+    # Get list of unique ID's
     idlist = cursor.execute("Select distinct id from qieshuntparams").fetchall()
     # Get Ranges
     bins = cursor.execute("SELECT DISTINCT range FROM qieshuntparams").fetchall()
-
     # Get Shunts
     shunts = cursor.execute("SELECT DISTINCT shunt FROM qieshuntparams").fetchall()
-    #if (runAll):
+    # This runs the files
     for nameList in idlist:
         Result = True
         name = nameList[0]
