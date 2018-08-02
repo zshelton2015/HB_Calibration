@@ -1,11 +1,15 @@
+#!/usr/bin/env python
+#Author: Zach Shelton
+#Date:8-2-2018
+#Purpose: Take all passing cards from QIE Calibration and output summary plots of calibration data
 import sqlite3
 import pprint
-import glob
 import os
 import sys
 from MergeDatabases import MergeDatabases
 from selectionCuts import *
 from utils import Quiet
+from passedCards import dblist
 if not os.path.exists("Summary_Of_Calibration"):
     os.makedirs("Summary_Of_Calibration")
 rootout = TFile("Summary_Of_Calibration/TotalAnalysis.root", "recreate")
@@ -43,7 +47,7 @@ for ra in bins:
         histoffset[r][-1].GetXaxis().SetTitle("Offset")
         histoffset[r][-1].GetYaxis().SetTitle("Frequency")
         gPad.SetLogy(1)
-for file in idlist:
+for file in dblist:
     xyz1234 = sqlite3.connect("%s"%(file))
     cursor = xyz1234.cursor()
     # Set digit limit on histogram
@@ -79,5 +83,5 @@ for ra in bins:
         if (r == 2 or r == 3) and (sh != 1):
             continue
         c[r][ind].Write()
-if(verbose):
-    print "Total Plots Shunt %.1f Range %d Finished"%(sh,r)
+rootout.close()
+print "Total Plots Shunt %.1f Range %d Finished"%(sh,r)
