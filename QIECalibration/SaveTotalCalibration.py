@@ -6,6 +6,7 @@ import sqlite3
 import pprint
 import os
 import sys
+from ROOT import *
 from MergeDatabases import MergeDatabases
 from selectionCuts import *
 from utils import Quiet
@@ -22,26 +23,27 @@ c = {0:[],1:[],2:[],3:[]}
 histshunt = {0:[],1:[],2:[],3:[]}
 histoffset = {0:[],1:[],2:[],3:[]}
 #TODO IMPORT LIST IN SYSARGRV[1]
+
 for ra in bins:
     for ind in shuntcount:
-        if (r == 2 or r == 3) and (sh != 1):
-            continue
         sh = shunts[ind]
         r = ra
+        if (ra == 2 or ra == 3) and (sh != 1):
+            continue
         c[r].append(TCanvas("Shunt %.1f  -  Range %i" % (sh, r), "histo"))
         c[r][-1].Divide(2,1)
         c[r][-1].cd(1)
-        maximums = failureconds[shunt][0]-failureconds[shunt][0]*.3
-        minimums = failureconds[shunt][1]+failureconds[shunt][1]*.3
+        maximums = failureconds[sh][0]-failureconds[sh][0]*.3
+        minimums = failureconds[sh][1]+failureconds[sh][1]*.3
         #Create Histograms for the shunt slopes
         histshunt[r].append(TH1D("SLOPE_Sh:_%.1f_RANGE_r:_%d" %(sh,r),"SLOPE Sh: %.1f RANGE r: %d" %(sh,r), 100, minimums, maximums))
         #histshunt[-1].SetTitle("SLOPE SH: %.1f "%(sh))
         histshunt[r][-1].GetXaxis().SetTitle("Slope")
         histshunt[r][-1].GetYaxis().SetTitle("Frequency")
         gPad.SetLogy(1)
-        maximumo  = -1*failurecondo[ra]-failurecondo[ra]*.3
-        minimumo  = failurecondo[ra]+failurecondo[ra]*..3
-        c[r].cd(2)
+        maximumo  = -1*float(failcondo[ra][0])-float(failcondo[ra][0])*.3
+        minimumo  = float(failcondo[ra][0])+float(failcondo[ra][0])*.3
+        c[r][-1].cd(2)
         histoffset[r].append(TH1D("OFFSET Sh: %.1f - R: %i" %(sh, r),"Shunt %.1f - Range %d" %(sh, r), 40, minimumo, maximumo))
         histoffset[r][-1].SetTitle("OFFSET SH: %.1f R: %d"%(sh,r))
         histoffset[r][-1].GetXaxis().SetTitle("Offset")
@@ -54,34 +56,25 @@ for file in dblist:
     TGaxis.SetMaxDigits(3)
     for ra in bins:
         for ind in shuntcount:
-            if (r == 2 or r == 3) and (sh != 1):
+            sh = shunts[ind]
+            r =ra
+            if (ra == 2 or ra == 3) and (sh != 1):
                 continue
-            sh = shunts[shuntcount]
-            r = ra
-            # Fetch the values of slope and offset for the corresponding shunt and range
-            # values = cursor.execute("select slope,offset from qieshuntparams where range=%i and shunt=%.1f ;" % (r, sh)).fetchall()
-            values = cursor.execute("select slope, offset from qieshuntparams as p where range = %i and shunt = %.1f;"%(r,sh)).fetchall()
-            for val in values:
-                try:
-                    slope, offset = val
-                except:
-                    print val
-                c[r][ind].cd(1)
-                histshunt[r][ind].Fill(slope)
-                c[r][ind].cd(2)
-                histoffset[r][ind].Fill(offset)
-            # Write the histograms to the file, saving them for later
-            # histshunt[-1].Draw()
-            # histoffset[-1].Draw()
-            # c2[-1].Write()
-            c[r][ind].Update()
-            #c[-1].SaveAs("data/%s/Run_%s/SummaryPlots/ImagesOutput/CARD_%s_SHUNT_%s_RANGE_%i.png"%(date, run, name, str(sh).replace(".",""), r))
-            if(images):
-                c[-1].Print("%s/SummaryPlots/TotalOutput/Total_SHUNT_%s_RANGE_%i.png"%(indir, str(sh).replace(".",""), r))
+                values = cursor.execute("select slope, offset from qieshuntparams as p where range = %i and shunt = %.1f;"%(r,sh)).fetchall()
+                for val in values:
+                    try:
+                        slope, offset = val
+                    except:
+                        print val
+                    c[r][ind].cd(1)
+                    histshunt[r][ind].Fill(slope)
+                    c[r][ind].cd(2)
+                    histoffset[r][ind].Fill(offset)
+                    c[r][ind].Update()
 for ra in bins:
     for ind in shuntcount:
         if (r == 2 or r == 3) and (sh != 1):
             continue
         c[r][ind].Write()
-rootout.close()
+rootout.Close()
 print "Total Plots Shunt %.1f Range %d Finished"%(sh,r)
